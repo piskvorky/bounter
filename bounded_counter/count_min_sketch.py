@@ -1,9 +1,10 @@
 import os
 import numpy
+import xxhash
 
 
 def hash_key(i, key):
-    return hash(str(i) + str(key))
+    return xxhash.xxh64(str(key), seed=i).intdigest()
 
 algorithm_basic = 0
 algorithm_conservative = 1
