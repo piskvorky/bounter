@@ -4,8 +4,8 @@ import cProfile
 
 # You can use this to profile logcounter implementation
 def test():
-    expected = 1000000
-    mks = bounded_counter.CountMinSketch(1, 1, 'logcounter1024')
+    expected = 50000
+    mks = bounded_counter.CountMinSketch(width=8, depth=8, algorithm='logcons1024')
 
     start = timer()
     for i in range(expected):
@@ -17,9 +17,8 @@ def test():
     log_actual = mks.log_encode(int(actual))
     log_expected = mks.log_encode(int(expected))
     print("Counter difference: %d (expected %d, actual %d)" % (log_actual - log_expected, log_expected, log_actual))
-    print(mks.table[0,0])
 
     print("Time: %s" %(end - start))
-
+    print(mks.cardinality())
 cProfile.run('test()')
 
