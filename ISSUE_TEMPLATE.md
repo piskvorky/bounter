@@ -13,7 +13,7 @@ TODO: change commented example
 <!--
 Example:
 ```
-from bounded_counter import CountMinSketch
+from bounter import CountMinSketch
 
 cms = CountMinSketch(width=1, depth=1)
 cms.increment("42****************************************")
@@ -38,7 +38,7 @@ Please run the following snippet and paste the output below.
 import platform; print(platform.platform())
 import sys; print("Python", sys.version)
 import numpy; print("NumPy", numpy.__version__)
-import bounded_counter; print("bounded_counter", bounded_counter.__version__)
+import bounter; print("bounter", bounter.__version__)
 -->
 
 

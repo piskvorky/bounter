@@ -13,7 +13,7 @@ import os
 import sys
 
 if sys.version_info < (2, 7):
-    raise ImportError("bounded_counter requires python >= 2.7")
+    raise ImportError("bounter requires python >= 2.7")
 
 # TODO add ez_setup?
 from setuptools import setup, find_packages
@@ -28,7 +28,7 @@ def extract_requirements():
 
 
 setup(
-    name='bounded_counter',
+    name='bounter',
     version='0.1.0',
     description='Counting frequencies in large data sets with constrained memory',
     long_description=read('README.md'),
@@ -40,8 +40,8 @@ setup(
     maintainer=u'Filip Stefanak',
     maintainer_email='f.stefanak@rare-technologies.com',
 
-    url='https://github.com/RaRe-Technologies/bounded_counter',
-    download_url='http://pypi.python.org/pypi/bounded_counter',
+    url='https://github.com/RaRe-Technologies/bounter',
+    download_url='http://pypi.python.org/pypi/bounter',
 
     keywords='counter, count-min sketch, bounded memory',
 
