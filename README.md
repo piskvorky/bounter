@@ -28,7 +28,7 @@ print(cms.sum) # 3
 Parameters
 ----------
 
--   **size_mb** Size in megabytes
+-   **size_mb** Maximum size of the structure in memory in megabytes.
 -   **Width**: The number of columns (hash buckets) in a single row of the table. Must be a power of 2.
     Significantly affects precision and memory footprint. For precise results, this should be no smaller than one
     order of magnitude away from the cardinality of the set.
