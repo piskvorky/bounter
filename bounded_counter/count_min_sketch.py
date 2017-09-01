@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Author: Filip Stefanak <f.stefanak@rare-technologies.com>
+# Copyright (C) 2017 Rare Technologies
+#
+# This code is distributed under the terms and conditions
+# from the MIT License (MIT).
+
 import random
 from HLL import HyperLogLog
 
@@ -234,4 +243,4 @@ class CountMinSketch(object):
          - For values up to depth of the table, the bias tends to stay low
          - With larger values, consider increasing width of the table.
         """
-        return self.width / self.cardinality()
+        return float(self.width) / self.cardinality()

@@ -1,0 +1,1 @@
+Please see [contribution-guide.org](http://www.contribution-guide.org/) for steps we expect from contributors before submitting an issue or bug report. Be as concrete as possible, include relevant logs, package versions etc.
