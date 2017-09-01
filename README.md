@@ -1,6 +1,8 @@
 Bounded Counter – Count-min Sketch frequency estimation for large sets
 ======================================================================
 
+**Work in progress!**
+
 Count frequencies in massive data sets using fixed memory footprint with a smart
 [Count-min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) implementation.
 
