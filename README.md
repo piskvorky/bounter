@@ -1,17 +1,34 @@
 Bounded Counter – Count-min Sketch frequency estimation for large sets
 ======================================================================
 
-Library implementing [Count-min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch)
-data structure used to estimate frequencies of elements in massive data sets with fixed memory footprint.
+Count frequencies in massive data sets using fixed memory footprint with a smart
+[Count-min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) implementation.
 
 Contains implementation of the basic and conservative-update Count-min Sketch table, as well as our own implementation
 using logarithmic probabilistic counter for reducing the space requirement (*logcons1024*).
 
 A [hyperloglog](https://github.com/ascv/HyperLogLog) counter is used to estimate the cardinality of the set of elements (how many distinct elements are tracked).
 
+```python
+cms = CountMinSketch(size_mb=512) # Use 512 MB
+print(cms.width)  # 16 777 216
+print(cms.depth)   # 8
+print(cms.size)  # 536 870 912 (512 MB in bytes)
+
+cms.increment("foo")
+cms.increment("bar")
+cms.increment("foo")
+
+print(cms["foo"]) # 2
+print(cms["bar"]) # 1
+print(cms.cardinality()) # 2
+print(cms.sum) # 3
+```
+
 Parameters
 ----------
 
+-   **size_mb** Size in megabytes
 -   **Width**: The number of columns (hash buckets) in a single row of the table. Must be a power of 2.
     Significantly affects precision and memory footprint. For precise results, this should be no smaller than one
     order of magnitude away from the cardinality of the set.

@@ -1,8 +1,8 @@
 import random
+from HLL import HyperLogLog
 
 import numpy
 import xxhash
-from HLL import HyperLogLog
 
 
 def hash_key(row, key):
@@ -18,30 +18,30 @@ class CountMinSketch(object):
     """
     Data structure used to estimate frequencies of elements in massive data sets with fixed memory footprint.
 
-Example:
-        {
-            cms = CountMinSketch(512) # Use 512 MB
-            print(cms.width)  # 16 777 216
-            print(cms.depth)   # 8
-            print(cms.size)  # 536 870 912 (512 MB in bytes)
+    Example::
 
-            cms.increment("foo")
-            cms.increment("bar")
-            cms.increment("foo")
+        cms = CountMinSketch(size_mb=512) # Use 512 MB
+        print(cms.width)  # 16 777 216
+        print(cms.depth)   # 8
+        print(cms.size)  # 536 870 912 (512 MB in bytes)
 
-            print(cms["foo"]) # 2
-            print(cms["bar"]) # 1
-            print(cms.cardinality()) # 2
-            print(cms.sum) # 3
-        }
+        cms.increment("foo")
+        cms.increment("bar")
+        cms.increment("foo")
+
+        print(cms["foo"]) # 2
+        print(cms["bar"]) # 1
+        print(cms.cardinality()) # 2
+        print(cms.sum) # 3
 
     To calculate memory footprint:
         ( width * depth * cell_size ) + HLL size
-    Cell size is
-       4B for basic / conservative algorithm
-       1B for logcounter8
-       2B for logcounter1024 / logcons1024
-       HLL size is 32 KB
+        Cell size is
+           - 4B for basic / conservative algorithm
+           - 1B for logcounter8
+           - 2B for logcounter1024 / logcons1024
+        HLL size is 32 KB
+
     Memory example:
         width 2^26 (67 108 864), depth 4, logcons1024 (2B) has 2^(26 + 2 + 1) + 32 768 = 536.9 MB
         Can be pickled to disk with this exact size
@@ -50,24 +50,25 @@ Example:
     def __init__(self, size_mb=64, width=None, depth=None, algorithm='conservative'):
         """
         Initializes the Count-Min Sketch structure with the given parameters
-        :param size_mb (int) controls the maximum size of the Count-min Sketch table.
-            If width is provided, this parameter is ignored. Please note that the structure will use an
-            overhead of approximately 33 KB in addition to the table size.
-        :param depth (int) controls the number of rows of the table. Having more rows decreases probability of a big
-            overestimation but also linearly affects performance and table size. Choose a small number such as 4-8.
-            The algorithm will default depth 8 if width is provided. Otherwise, it will choose a depth in range 5-8
-            to best fill the maximum memory (for memory size which is a power of 2, depth of 8 is always used).
-        :param width (int) controls the number of hash buckets in one row of the table, overrides size_mb parameter.
-            If width is not provided, the algorithm chooses the maximum width to fill the available size.
-            The more, the better, should be very large, preferably in the same order of magnitude as the cardinality
-            of the counted set.
 
-        :param algorithm (string) controls the algorithm used for counting
-            'basic'
-            'conservative' (default)
-            'logcounter8'
-            'logcounter1024'
-            'logcons1024'
+        Args:
+            size_mb (int): controls the maximum size of the Count-min Sketch table.
+                If width is provided, this parameter is ignored. Please note that the structure will use an
+                overhead of approximately 33 KB in addition to the table size.
+            depth (int): controls the number of rows of the table. Having more rows decreases probability of a big
+                overestimation but also linearly affects performance and table size. Choose a small number such as 4-8.
+                The algorithm will default depth 8 if width is provided. Otherwise, it will choose a depth in range 5-8
+                to best fill the maximum memory (for memory size which is a power of 2, depth of 8 is always used).
+            width (int): controls the number of hash buckets in one row of the table, overrides size_mb parameter.
+                If width is not provided, the algorithm chooses the maximum width to fill the available size.
+                The more, the better, should be very large, preferably in the same order of magnitude as the cardinality
+                of the counted set.
+            algorithm (str): controls the algorithm used for counting
+                - 'basic'
+                - 'conservative' (default)
+                - 'logcounter8'
+                - 'logcounter1024'
+                - 'logcons1024'
         """
         self.array_type = CountMinSketch.cell_type(algorithm)
         cell_size = self.array_type().itemsize
@@ -84,7 +85,7 @@ Example:
             if width != 1 << (width.bit_length() - 1):
                 raise ValueError("Requested width must be a power of 2!")
             self.width = width
-            self.depth = (size_mb * 1048576) // (width * cell_size)
+            self.depth = (max_size_mb * 1048576) // (width * cell_size)
             if not self.depth:
                 raise ValueError("Requested width is too large for maximum memory size!")
         else:
