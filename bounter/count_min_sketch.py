@@ -66,8 +66,8 @@ class CountMinSketch(object):
                 overhead of approximately 33 KB in addition to the table size.
             depth (int): controls the number of rows of the table. Having more rows decreases probability of a big
                 overestimation but also linearly affects performance and table size. Choose a small number such as 4-8.
-                The algorithm will default depth 8 if width is provided. Otherwise, it will choose a depth in range 5-8
-                to best fill the maximum memory (for memory size which is a power of 2, depth of 8 is always used).
+                The algorithm will default depth 8 if width is provided. Otherwise, it will choose a depth in range 4-7
+                to best fill the maximum memory (for memory size which is a power of 2, depth of 4 is always used).
             width (int): controls the number of hash buckets in one row of the table, overrides size_mb parameter.
                 If width is not provided, the algorithm chooses the maximum width to fill the available size.
                 The more, the better, should be very large, preferably in the same order of magnitude as the cardinality
@@ -82,7 +82,7 @@ class CountMinSketch(object):
         self.array_type = CountMinSketch.cell_type(algorithm)
         cell_size = self.array_type().itemsize
         if width is None and depth is None:
-            self.width = 1 << (size_mb * 114688 // cell_size).bit_length()
+            self.width = 1 << (size_mb * 131072 // cell_size).bit_length()
             self.depth = (size_mb * 1048576) // (self.width * cell_size)
         elif width is None:
             self.depth = depth
