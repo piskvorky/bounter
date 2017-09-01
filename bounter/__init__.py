@@ -7,6 +7,6 @@
 # This code is distributed under the terms and conditions
 # from the MIT License (MIT).
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 from .count_min_sketch import *

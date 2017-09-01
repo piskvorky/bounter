@@ -29,7 +29,7 @@ def extract_requirements():
 
 setup(
     name='bounter',
-    version='0.1.0',
+    version='0.1.1',
     description='Counting frequencies in large data sets with constrained memory',
     long_description=read('README.md'),
 
