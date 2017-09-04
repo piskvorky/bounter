@@ -46,9 +46,9 @@ class CountMinSketch(object):
     To calculate memory footprint:
         ( width * depth * cell_size ) + HLL size
         Cell size is
-           - 4B for basic / conservative algorithm
+           - 4B for conservative and basic algorithm
            - 1B for logcounter8
-           - 2B for logcounter1024 / logcons1024
+           - 2B for logcounter1024
         HLL size is 32 KB
 
     Memory example:
@@ -77,7 +77,6 @@ class CountMinSketch(object):
                 - 'conservative' (default)
                 - 'logcounter8'
                 - 'logcounter1024'
-                - 'logcons1024'
         """
         self.array_type = CountMinSketch.cell_type(algorithm)
         cell_size = self.array_type().itemsize
@@ -109,20 +108,16 @@ class CountMinSketch(object):
             self.inc_method = self.basic_increment
         if algorithm and str(algorithm).lower() == 'logcounter8':
             self.logshift = 2
-            self.inc_method = self.log_increment
+            self.inc_method = self.conservative_increment
             self.decode = self.log_decode
         if algorithm and str(algorithm).lower() == 'logcounter1024':
             self.logshift = 9
-            self.inc_method = self.log_increment
-            self.decode = self.log_decode
-        if algorithm and str(algorithm).lower() == 'logcons1024':
-            self.logshift = 9
-            self.inc_method = self.log_increment_conservative
+            self.inc_method = self.conservative_increment
             self.decode = self.log_decode
 
         self.hash_length = self.width.bit_length()
         self.hash_mask = (1 << (self.hash_length - 1)) - 1
-        self.logbase = 1 << (self.logshift + 1)
+        self.logbase = 1 << (self.logshift + 1) if self.logshift > 0 else 0
         self.table = numpy.zeros((self.depth, self.width), self.array_type)
 
         self.sum = 0
@@ -172,36 +167,14 @@ class CountMinSketch(object):
 
     def basic_increment(self, key):
         for row in range(self.depth):
-            self.table[row][self.bucket(row, key)] += 1
+            self.table[row, self.bucket(row, key)] += 1
 
     def conservative_increment(self, key):
-        current = self[key]
-        for row in range(self.depth):
-            bucket = self.bucket(row, key)
-            if self.table[row, bucket] == current:
-                self.table[row, bucket] += 1
-
-    def log_increment(self, key):
-        table = self.table
-        for row in range(self.depth):
-            bucket = self.bucket(row, key)
-            current = int(table[row, bucket])
-            if current < 2 * self.logbase:
-                current += 1
-                self.table[row, bucket] = current
-            else:
-                mask = (1 << (current // self.logbase - 1)) - 1
-                r = random.getrandbits(64)
-                if (r & mask) == 0:
-                    current += 1
-                    table[row, bucket] = current
-
-    def log_increment_conservative(self, key):
         table = self.table
         buckets = [self.bucket(row, key) for row in range(self.depth)]
         values = [int(table[row, bucket]) for row, bucket in enumerate(buckets)]
         current = min(values)
-        if current > 2 * self.logbase:
+        if self.logbase > 0 and current > 2 * self.logbase:
             mask = (1 << (current // self.logbase - 1)) - 1
             r = random.getrandbits(64)
             if (r & mask) != 0:
