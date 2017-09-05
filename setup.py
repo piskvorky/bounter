@@ -16,7 +16,9 @@ if sys.version_info < (2, 7):
     raise ImportError("bounter requires python >= 2.7")
 
 # TODO add ez_setup?
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
+from Cython.Build import cythonize
+import numpy
 
 
 def read(fname):
@@ -26,13 +28,18 @@ def read(fname):
 def extract_requirements():
     return read('requirements.txt').splitlines()
 
-
 setup(
     name='bounter',
-    version='0.1.1',
+    version='0.2.0',
     description='Counting frequencies in large data sets with constrained memory',
     long_description=read('README.md'),
 
+    headers=['cbounter/hll.h', 'cbounter/murmur3.h'],
+    ext_modules=cythonize("bounter/*.pyx") + [
+        Extension('HLL', ['cbounter/hll.c', 'cbounter/murmur3.c']),
+        Extension('CMSC', ['cbounter/cms_conservative.c', 'cbounter/murmur3.c'])
+    ],
+    include_dirs=[numpy.get_include()],
     packages=find_packages(),
 
     author=u'Filip Stefanak',

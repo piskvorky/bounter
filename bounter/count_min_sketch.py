@@ -8,10 +8,10 @@
 # from the MIT License (MIT).
 
 import random
-from HLL import HyperLogLog
 
 import numpy
 import xxhash
+from HLL import HyperLogLog
 
 
 def hash_key(row, key):
@@ -93,7 +93,7 @@ class CountMinSketch(object):
             if width != 1 << (width.bit_length() - 1):
                 raise ValueError("Requested width must be a power of 2!")
             self.width = width
-            self.depth = (max_size_mb * 1048576) // (width * cell_size)
+            self.depth = (size_mb * 1048576) // (width * cell_size)
             if not self.depth:
                 raise ValueError("Requested width is too large for maximum memory size!")
         else:
