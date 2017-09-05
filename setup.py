@@ -17,8 +17,6 @@ if sys.version_info < (2, 7):
 
 # TODO add ez_setup?
 from setuptools import setup, find_packages, Extension
-from Cython.Build import cythonize
-import numpy
 
 
 def read(fname):
@@ -35,11 +33,10 @@ setup(
     long_description=read('README.md'),
 
     headers=['cbounter/hll.h', 'cbounter/murmur3.h'],
-    ext_modules=cythonize("bounter/*.pyx") + [
+    ext_modules=[
         Extension('HLL', ['cbounter/hll.c', 'cbounter/murmur3.c']),
         Extension('CMSC', ['cbounter/cms_conservative.c', 'cbounter/murmur3.c'])
     ],
-    include_dirs=[numpy.get_include()],
     packages=find_packages(),
 
     author=u'Filip Stefanak',
