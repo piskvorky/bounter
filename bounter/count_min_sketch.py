@@ -11,7 +11,6 @@ import random
 
 import numpy
 import xxhash
-from HLL import HyperLogLog
 
 
 def hash_key(row, key):
@@ -174,7 +173,7 @@ class CountMinSketch(object):
         buckets = [self.bucket(row, key) for row in range(self.depth)]
         values = [int(table[row, bucket]) for row, bucket in enumerate(buckets)]
         current = min(values)
-        if self.logbase > 0 and current > 2 * self.logbase:
+        if self.logbase > 0 and current >= 2 * self.logbase:
             mask = (1 << (current // self.logbase - 1)) - 1
             r = random.getrandbits(64)
             if (r & mask) != 0:

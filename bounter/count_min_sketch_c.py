@@ -1,8 +1,15 @@
-from CMSC import CMS_Conservative
+import CMSC
 
 class CountMinSketch(object):
     def __init__(self, size_mb=64, width=None, depth=None, algorithm='conservative'):
+
         cell_size = 4
+        if algorithm and str(algorithm).lower() == 'log8':
+            cell_size = 1
+        elif algorithm and str(algorithm).lower() == 'log1024':
+            cell_size = 2
+        self.cell_size = cell_size
+
         if width is None and depth is None:
             self.width = 1 << (size_mb * 65536 // cell_size).bit_length()
             self.depth = (size_mb * 1048576) // (self.width * cell_size)
@@ -25,7 +32,12 @@ class CountMinSketch(object):
             self.width = width
             self.depth = depth
 
-        self.cms = CMS_Conservative(width=self.width, depth=self.depth)
+        if algorithm and str(algorithm).lower() == 'log8':
+            self.cms = CMSC.CMS_Log8(width=self.width, depth=self.depth)
+        elif algorithm and str(algorithm).lower() == 'log1024':
+            self.cms = CMSC.CMS_Log1024(width=self.width, depth=self.depth)
+        else:
+            self.cms = CMSC.CMS_Conservative(width=self.width, depth=self.depth)
 
     def increment(self, key):
         self.cms.increment(str(key))
@@ -47,4 +59,4 @@ class CountMinSketch(object):
         Returns current size of the Count-min Sketch table in bytes.
         Does *not* include additional constant overhead used by parameter variables and HLL table, totalling less than 33KB.
         """
-        return self.width * self.depth * 4
+        return self.width * self.depth * self.cell_size

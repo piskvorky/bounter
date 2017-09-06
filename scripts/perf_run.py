@@ -16,7 +16,7 @@ from bounter import CountMinSketchC as CountMinSketch
 
 min_count = 5
 threshold = 10.0
-articles = 100
+articles = 1000
 wiki_file = 'C:/rare/corpus/wiki/title_tokens.txt.gz'
 
 wiki = smart_open.smart_open(wiki_file)
@@ -125,12 +125,12 @@ end = timer()
 print("Loaded %d bigrams (%d distinct) in %s" % (reference.sum, reference.cardinality(), end - start))
 
 sizes_start = int(reference.cardinality()).bit_length() - 4
-# sizes = (1 << (sizes_start + i) for i in range(8))
-# for width in sizes:
-for width in [262144]:
+sizes = (1 << (sizes_start + i) for i in range(8))
+for width in sizes:
+    # for width in [262144]:
     #    for algorithm in ('conservative', 'logcons1024', 'logcounter8'):
-    for algorithm in ['conservative']:
-        for depth in (3, 4, 5, 6, 8, 10):
+    for algorithm in ['conservative', 'log1024', 'log8']:
+        for depth in [8]:
             cms = CountMinSketch(width=width, depth=depth, algorithm=algorithm)
             (time, deviation, precision, recall, f1) = test_single(cms, reference, unigrams)
             print("%d\t%d\t%d\t%s\t%d\t%d\t%f\t%f\t%f\t%f\t%s" %
