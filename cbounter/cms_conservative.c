@@ -9,9 +9,10 @@
 #include <Python.h>
 #include "structmember.h"
 #include "murmur3.h"
+#include "hll.h"
 #include <math.h>
 #include <stdint.h>
-#include <stdio.h>
+#include <stdlib.h>
 
 typedef uint32_t cell_t;
 
@@ -20,17 +21,24 @@ typedef struct {
     short int depth;
     uint32_t width;
     uint32_t hash_mask;
+    long long total;
     cell_t ** table;
+    HyperLogLog hll;
 } CMS_Conservative;
 
+/* Destructor invoked by python. */
 static void
 CMS_Conservative_dealloc(CMS_Conservative* self)
 {
+    // free our own tables
     for (int i = 0; i < self->depth; i++)
     {
         free(self->table[i]);
     }
     free(self->table);
+    // then deallocate hll
+    HyperLogLog_dealloc(&self->hll);
+    // finally, destroy itself
     #if PY_MAJOR_VERSION >= 3
     Py_TYPE(self)->tp_free((PyObject*) self);
     #else
@@ -52,7 +60,7 @@ CMS_Conservative_init(CMS_Conservative *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"width", "depth", NULL};
 
     uint32_t w;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "i|i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "ii", kwlist,
 				      &w, &self->depth)) {
         return -1;
     }
@@ -70,7 +78,7 @@ CMS_Conservative_init(CMS_Conservative *self, PyObject *args, PyObject *kwds)
     self->width = 1 << hash_length;
     self->hash_mask = self->width - 1;
 
-    uint32_t a = 0;
+    HyperLogLog_init(&self->hll, 16);
 
     self->table = (cell_t **) malloc(self->depth * sizeof(cell_t *));
     for (int i = 0; i < self->depth; i++)
@@ -84,7 +92,7 @@ static PyMemberDef CMS_Conservative_members[] = {
     {NULL} /* Sentinel */
 };
 
-/* Adds an element to the cardinality estimator. */
+/* Adds an element to the frequency estimator. */
 static PyObject *
 CMS_Conservative_increment(CMS_Conservative *self, PyObject *args)
 {
@@ -98,6 +106,8 @@ CMS_Conservative_increment(CMS_Conservative *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "s#", &data, &dataLength))
         return NULL;
 
+    self->total += 1;
+
     for (int i = 0; i < self->depth; i++)
     {
         MurmurHash3_x86_32((void *) data, dataLength, i, (void *) &hash);
@@ -107,6 +117,9 @@ CMS_Conservative_increment(CMS_Conservative *self, PyObject *args)
         if (value < min_value)
             min_value = value;
         values[i] = self->table[i][bucket];
+
+        if (i == 0)
+            HyperLogLog_add(&self->hll, hash);
     }
 
     for (int i = 0; i < self->depth; i++)
@@ -117,7 +130,7 @@ CMS_Conservative_increment(CMS_Conservative *self, PyObject *args)
     return Py_None;
 };
 
-/* Retrieves a value. */
+/* Retrieves estimate for the frequency of a single element. */
 static PyObject *
 CMS_Conservative_getitem(CMS_Conservative *self, PyObject *args)
 {
@@ -141,12 +154,33 @@ CMS_Conservative_getitem(CMS_Conservative *self, PyObject *args)
     return Py_BuildValue("i", min_value);
 }
 
+/* Retrieves estimate of the set cardinality */
+static PyObject *
+CMS_Conservative_cardinality(CMS_Conservative *self, PyObject *args)
+{
+   double cardinality = HyperLogLog_cardinality(&self->hll);
+   return Py_BuildValue("i", (long long) cardinality);
+}
+
+/* Retrieves estimate of the set cardinality */
+static PyObject *
+CMS_Conservative_total(CMS_Conservative *self, PyObject *args)
+{
+   return Py_BuildValue("i", self->total);
+}
+
 static PyMethodDef CMS_Conservative_methods[] = {
-    {"get", (PyCFunction)CMS_Conservative_getitem, METH_VARARGS,
-    "Retrieve value."
-    },
     {"increment", (PyCFunction)CMS_Conservative_increment, METH_VARARGS,
      "Increase counter by one."
+    },
+    {"get", (PyCFunction)CMS_Conservative_getitem, METH_VARARGS,
+    "Retrieves estimate for the frequency of a single element."
+    },
+    {"cardinality", (PyCFunction)CMS_Conservative_cardinality, METH_NOARGS,
+    "Retrieves estimate of the set cardinality."
+    },
+    {"total", (PyCFunction)CMS_Conservative_total, METH_NOARGS,
+    "Retrieves the total number of increments."
     },
     {NULL}  /* Sentinel */
 };

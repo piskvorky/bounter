@@ -1,12 +1,10 @@
 from CMSC import CMS_Conservative
-from HLL import HyperLogLog
-
 
 class CountMinSketch(object):
     def __init__(self, size_mb=64, width=None, depth=None, algorithm='conservative'):
         cell_size = 4
         if width is None and depth is None:
-            self.width = 1 << (size_mb * 131072 // cell_size).bit_length()
+            self.width = 1 << (size_mb * 65536 // cell_size).bit_length()
             self.depth = (size_mb * 1048576) // (self.width * cell_size)
         elif width is None:
             self.depth = depth
@@ -28,13 +26,9 @@ class CountMinSketch(object):
             self.depth = depth
 
         self.cms = CMS_Conservative(width=self.width, depth=self.depth)
-        self.sum = 0
-        self.distinct_counter = HyperLogLog(15)
 
     def increment(self, key):
         self.cms.increment(str(key))
-        self.distinct_counter.add(str(key))
-        self.sum += 1
 
     def __getitem__(self, key):
         return self.cms.get(str(key))
@@ -43,7 +37,10 @@ class CountMinSketch(object):
         """
         Returns an estimate for the number of distinct keys counted by the structure. The estimate should be within 1%.
         """
-        return int(self.distinct_counter.cardinality())
+        return self.cms.cardinality()
+
+    def total(self):
+        return self.cms.total()
 
     def size(self):
         """

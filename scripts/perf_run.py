@@ -5,11 +5,7 @@ different parameters.
 For each run of bounter, compares the results to reference counter w.r.t. phraser collocation algorithm.
 """
 
-import smart_open
-from bounter import CountMinSketchC as CountMinSketch
 # from bounter import CountMinSketch as CountMinSketch
-from collections import Counter
-from timeit import default_timer as timer
 # from bounter import CountMinSketch as CountMinSketch
 from collections import Counter
 from timeit import default_timer as timer
@@ -20,7 +16,7 @@ from bounter import CountMinSketchC as CountMinSketch
 
 min_count = 5
 threshold = 10.0
-articles = 200
+articles = 100
 wiki_file = 'C:/rare/corpus/wiki/title_tokens.txt.gz'
 
 wiki = smart_open.smart_open(wiki_file)
@@ -123,8 +119,10 @@ def test_single(counter, reference, unigrams):
 
 reference = Reference()
 unigrams = Counter()
+start = timer()
 load_single(reference, unigrams)
-print("Loaded %d bigrams (%d distinct)" % (reference.sum, reference.cardinality()))
+end = timer()
+print("Loaded %d bigrams (%d distinct) in %s" % (reference.sum, reference.cardinality(), end - start))
 
 sizes_start = int(reference.cardinality()).bit_length() - 4
 # sizes = (1 << (sizes_start + i) for i in range(8))
@@ -135,5 +133,7 @@ for width in [262144]:
         for depth in (3, 4, 5, 6, 8, 10):
             cms = CountMinSketch(width=width, depth=depth, algorithm=algorithm)
             (time, deviation, precision, recall, f1) = test_single(cms, reference, unigrams)
-            print("%d\t%s\t%d\t%d\t%f\t%f\t%f\t%f\t%s" %
-                  (cms.size(), algorithm, width, depth, deviation, precision, recall, f1, time))
+            print("%d\t%d\t%d\t%s\t%d\t%d\t%f\t%f\t%f\t%f\t%s" %
+                  (
+                  cms.size(), cms.cardinality(), cms.total(), algorithm, width, depth, deviation, precision, recall, f1,
+                  time))
