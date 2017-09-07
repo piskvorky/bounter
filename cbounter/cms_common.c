@@ -20,14 +20,6 @@
 
 #include <stdio.h>
 
-#if PY_MAJOR_VERSION >= 3
-    #define PY_ASSTRING PyBytes_AsStringAndSize
-    #define PY_FROMSTRING PyBytes_FromStringAndSize
-#else
-    #define PY_ASSTRING PyString_AsStringAndSize
-    #define PY_FROMSTRING PyString_FromStringAndSize
-#endif
-
 typedef struct {
     PyObject_HEAD
     short int depth;
@@ -43,7 +35,8 @@ static void
 CMS_VARIANT(_dealloc)(CMS_TYPE* self)
 {
     // free our own tables
-    for (int i = 0; i < self->depth; i++)
+    int i;
+    for (i = 0; i < self->depth; i++)
     {
         free(self->table[i]);
     }
@@ -93,7 +86,8 @@ CMS_VARIANT(_init)(CMS_TYPE *self, PyObject *args, PyObject *kwds)
     HyperLogLog_init(&self->hll, 16);
 
     self->table = (CMS_CELL_TYPE **) malloc(self->depth * sizeof(CMS_CELL_TYPE *));
-    for (int i = 0; i < self->depth; i++)
+    int i;
+    for (i = 0; i < self->depth; i++)
     {
         self->table[i] = (CMS_CELL_TYPE *) calloc(self->width, sizeof(CMS_CELL_TYPE));
     }
@@ -122,7 +116,8 @@ CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
 
     self->total += 1;
 
-    for (int i = 0; i < self->depth; i++)
+    int i;
+    for (i = 0; i < self->depth; i++)
     {
         MurmurHash3_x86_32((void *) data, dataLength, i, (void *) &hash);
         uint32_t bucket = hash & self->hash_mask;
@@ -138,7 +133,8 @@ CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
 
     if (CMS_VARIANT(should_inc)(min_value))
     {
-        for (int i = 0; i < self->depth; i++)
+        int i;
+        for (i = 0; i < self->depth; i++)
             if (values[i] == min_value)
                 self->table[i][buckets[i]] = min_value + 1;
     }
@@ -161,7 +157,8 @@ CMS_VARIANT(_getitem)(CMS_TYPE *self, PyObject *args)
 
     uint32_t hash;
     CMS_CELL_TYPE min_value = -1;
-    for (int i = 0; i < self->depth; i++)
+    int i;
+    for (i = 0; i < self->depth; i++)
     {
         MurmurHash3_x86_32((void *) data, dataLength, i, (void *) &hash);
         uint32_t bucket = hash & self->hash_mask;
@@ -194,14 +191,15 @@ CMS_VARIANT(_reduce)(CMS_TYPE *self)
 {
     PyObject *args = Py_BuildValue("(ii)", self->width, self->depth);
     PyObject *state_table = PyList_New(self->depth + 2);
-    for (int i = 0; i < self->depth; i++)
+    int i;
+    for (i = 0; i < self->depth; i++)
     {
-        PyObject *row = PY_FROMSTRING (self->table[i], self->width * sizeof(CMS_CELL_TYPE));
+        PyObject *row = PyByteArray_FromStringAndSize(self->table[i], self->width * sizeof(CMS_CELL_TYPE));
         if (!row)
             return NULL;
         PyList_SetItem(state_table, i, row);
     }
-    PyObject *hll = PY_FROMSTRING (self->hll.registers, self->hll.size);
+    PyObject *hll = PyByteArray_FromStringAndSize(self->hll.registers, self->hll.size);
     if (!hll)
         return NULL;
     PyList_SetItem(state_table, self->depth, hll);
@@ -220,19 +218,21 @@ CMS_VARIANT(_set_state)(CMS_TYPE * self, PyObject * state)
 
     Py_ssize_t rowlen = self->width * sizeof(CMS_CELL_TYPE);
     CMS_CELL_TYPE *row_buffer;
-    Py_ssize_t hlllen = self->hll.size;
     hll_cell_t *hll_buffer;
 
-    for (int i = 0; i < self->depth; i++)
+    int i;
+    for (i = 0; i < self->depth; i++)
     {
         PyObject *row = PyList_GetItem(state_table, i);
-        if (PY_ASSTRING(row, &row_buffer, &rowlen))
+        row_buffer = PyByteArray_AsString(row);
+        if (!row_buffer)
             return NULL;
         memcpy(self->table[i], row_buffer, rowlen);
     }
 
     PyObject *row = PyList_GetItem(state_table, self->depth);
-    if (PY_ASSTRING(row, &hll_buffer, &hlllen))
+    hll_buffer = PyByteArray_AsString(row);
+    if (!hll_buffer)
         return NULL;
     memcpy(self->hll.registers, hll_buffer, self->hll.size);
 

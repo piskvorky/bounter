@@ -30,8 +30,5 @@ static inline long long CMS_VARIANT(decode)(CMS_CELL_TYPE value)
     if (value <= 2048)
         return value;
     else
-        {
-            uint64_t foo = value;
-            return (1024 + (value & 1023)) << ((value >> 10) - 1);
-        }
+        return (1024 + (value & 1023)) << ((value >> 10) - 1);
 }

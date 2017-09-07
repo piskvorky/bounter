@@ -109,7 +109,8 @@ int HyperLogLog_merge(HyperLogLog *self, HyperLogLog *hll)
         return 1;
     }
 
-    for (uint32_t i = 0; i < self->size; i++) {
+    uint32_t i;
+    for (i = 0; i < self->size; i++) {
         if (self->registers[i] < hll->registers[i])
 	        self->registers[i] = hll->registers[i];
     }
