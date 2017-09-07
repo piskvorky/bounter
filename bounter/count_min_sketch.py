@@ -100,6 +100,9 @@ class CountMinSketch(object):
     def total(self):
         return self.cms.total()
 
+    def merge(self, other):
+        self.cms.merge(other.cms)
+
     def size(self):
         """
         Returns current size of the Count-min Sketch table in bytes.

@@ -185,6 +185,44 @@ CMS_VARIANT(_total)(CMS_TYPE *self, PyObject *args)
    return Py_BuildValue("i", self->total);
 }
 
+static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value) (CMS_CELL_TYPE v1, CMS_CELL_TYPE v2);
+
+/**
+  * Merges another CMS instance into this one.
+  * This instance is incremented by values of the other instance, which remains unaffected
+  */
+CMS_VARIANT(_merge)(CMS_TYPE *self, PyObject *args)
+{
+    CMS_TYPE *other;
+    if (!PyArg_ParseTuple(args, "O!", ((PyObject *) self)->ob_type, &other))
+    {
+        char * msg = "Object to merge must be an instance of CMS with the same algorithm.";
+        PyErr_SetString(PyExc_TypeError, msg);
+        return NULL;
+    }
+    if (other->width != self->width || other->depth != self->depth)
+    {
+        char * msg = "CMS to merge must use the same width and depth.";
+        PyErr_SetString(PyExc_ValueError, msg);
+        return NULL;
+    }
+    uint32_t i,j;
+    for (i = 0; i < self->depth; i++)
+    {
+        for (j = 0; j < self->width; j++)
+        {
+            CMS_CELL_TYPE v1 = self->table[i][j];
+            CMS_CELL_TYPE v2 = other->table[i][j];
+            self->table[i][j] = CMS_VARIANT(_merge_value)(v1, v2);
+        }
+    }
+
+    self->total += other->total;
+    HyperLogLog_merge(&self->hll, &other->hll);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 /* Serialization function for pickling. */
 static PyObject *
 CMS_VARIANT(_reduce)(CMS_TYPE *self)
@@ -254,6 +292,9 @@ static PyMethodDef CMS_VARIANT(_methods)[] = {
     },
     {"total", (PyCFunction)CMS_VARIANT(_total), METH_NOARGS,
     "Retrieves the total number of increments."
+    },
+    {"merge", (PyCFunction)CMS_VARIANT(_merge), METH_VARARGS,
+    "Merges another CMS instance into this one."
     },
     {"__reduce__", (PyCFunction)CMS_VARIANT(_reduce), METH_NOARGS,
      "Serialization function for pickling."
