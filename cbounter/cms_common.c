@@ -18,6 +18,15 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <stdio.h>
+
+#if PY_MAJOR_VERSION >= 3
+    #define PY_ASSTRING PyBytes_AsStringAndSize
+    #define PY_FROMSTRING PyBytes_FromStringAndSize
+#else
+    #define PY_ASSTRING PyString_AsStringAndSize
+    #define PY_FROMSTRING PyString_FromStringAndSize
+#endif
 
 typedef struct {
     PyObject_HEAD
@@ -179,6 +188,60 @@ CMS_VARIANT(_total)(CMS_TYPE *self, PyObject *args)
    return Py_BuildValue("i", self->total);
 }
 
+/* Serialization function for pickling. */
+static PyObject *
+CMS_VARIANT(_reduce)(CMS_TYPE *self)
+{
+    PyObject *args = Py_BuildValue("(ii)", self->width, self->depth);
+    PyObject *state_table = PyList_New(self->depth + 2);
+    for (int i = 0; i < self->depth; i++)
+    {
+        PyObject *row = PY_FROMSTRING (self->table[i], self->width * sizeof(CMS_CELL_TYPE));
+        if (!row)
+            return NULL;
+        PyList_SetItem(state_table, i, row);
+    }
+    PyObject *hll = PY_FROMSTRING (self->hll.registers, self->hll.size);
+    if (!hll)
+        return NULL;
+    PyList_SetItem(state_table, self->depth, hll);
+    PyList_SetItem(state_table, self->depth + 1, Py_BuildValue("i", self->total));
+    return Py_BuildValue("(OOO)", Py_TYPE(self), args, state_table);
+}
+
+/* De-serialization function for pickling. */
+static PyObject *
+CMS_VARIANT(_set_state)(CMS_TYPE * self, PyObject * state)
+{
+    PyObject *state_table;
+
+    if (!PyArg_ParseTuple(state, "O:setstate", &state_table))
+        return NULL;
+
+    Py_ssize_t rowlen = self->width * sizeof(CMS_CELL_TYPE);
+    CMS_CELL_TYPE *row_buffer;
+    Py_ssize_t hlllen = self->hll.size;
+    hll_cell_t *hll_buffer;
+
+    for (int i = 0; i < self->depth; i++)
+    {
+        PyObject *row = PyList_GetItem(state_table, i);
+        if (PY_ASSTRING(row, &row_buffer, &rowlen))
+            return NULL;
+        memcpy(self->table[i], row_buffer, rowlen);
+    }
+
+    PyObject *row = PyList_GetItem(state_table, self->depth);
+    if (PY_ASSTRING(row, &hll_buffer, &hlllen))
+        return NULL;
+    memcpy(self->hll.registers, hll_buffer, self->hll.size);
+
+    self->total = PyLong_AsLongLong(PyList_GetItem(state_table, self->depth + 1));
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static PyMethodDef CMS_VARIANT(_methods)[] = {
     {"increment", (PyCFunction)CMS_VARIANT(_increment), METH_VARARGS,
      "Increase counter by one."
@@ -191,6 +254,12 @@ static PyMethodDef CMS_VARIANT(_methods)[] = {
     },
     {"total", (PyCFunction)CMS_VARIANT(_total), METH_NOARGS,
     "Retrieves the total number of increments."
+    },
+    {"__reduce__", (PyCFunction)CMS_VARIANT(_reduce), METH_NOARGS,
+     "Serialization function for pickling."
+    },
+    {"__setstate__", (PyCFunction)CMS_VARIANT(_set_state), METH_VARARGS,
+    "De-serialization function for pickling."
     },
     {NULL}  /* Sentinel */
 };
