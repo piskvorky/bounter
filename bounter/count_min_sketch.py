@@ -1,14 +1,44 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Author: Filip Stefanak <f.stefanak@rare-technologies.com>
+# Copyright (C) 2017 Rare Technologies
+#
+# This code is distributed under the terms and conditions
+# from the MIT License (MIT).
+
 import CMSC
 
 class CountMinSketch(object):
+    """
+    Data structure used to estimate frequencies of elements in massive data sets with fixed memory footprint.
+    Example::
+        cms = CountMinSketch(size_mb=512) # Use 512 MB
+        print(cms.width)  # 16 777 216
+        print(cms.depth)   # 8
+        print(cms.size)  # 536 870 912 (512 MB in bytes)
+        cms.increment("foo")
+        cms.increment("bar")
+        cms.increment("foo")
+        print(cms["foo"]) # 2
+        print(cms["bar"]) # 1
+        print(cms.cardinality()) # 2
+        print(cms.total()) # 3
+    To calculate memory footprint:
+        ( width * depth * cell_size ) + HLL size
+        Cell size is
+           - 4B for conservative and basic algorithm
+           - 2B for log1024
+           - 1B for log8
+        HLL size is 64 KB
+    Memory example:
+        width 2^25 (33 554 432), depth 8, log1024 (2B) has 2^(25 + 3 + 1) + 64 KB = 512.06 MB
+        Can be pickled to disk with this exact size
+    """
     def __init__(self, size_mb=64, width=None, depth=None, algorithm='conservative'):
 
-        cell_size = 4
-        if algorithm and str(algorithm).lower() == 'log8':
-            cell_size = 1
-        elif algorithm and str(algorithm).lower() == 'log1024':
-            cell_size = 2
-        self.cell_size = cell_size
+        cell_size = CountMinSketch.cell_size(algorithm);
+        self.cell_size_v = cell_size
 
         if width is None and depth is None:
             self.width = 1 << (size_mb * 65536 // cell_size).bit_length()
@@ -39,6 +69,22 @@ class CountMinSketch(object):
         else:
             self.cms = CMSC.CMS_Conservative(width=self.width, depth=self.depth)
 
+    @staticmethod
+    def cell_size(algorithm='conservative'):
+        if str(algorithm).lower() == 'log8':
+            return 1
+        if str(algorithm).lower() == 'log1024':
+            return 2
+        return 4
+
+    @staticmethod
+    def table_size(width, depth=4, algorithm='conservative'):
+        """
+        Returns size of Count-min Sketch table with provided parameters in bytes.
+        Does *not* include additional constant overhead used by parameter variables and HLL table, totalling less than 65KB.
+        """
+        return width * depth * CountMinSketch.cell_size(algorithm)
+
     def increment(self, key):
         self.cms.increment(str(key))
 
@@ -57,6 +103,6 @@ class CountMinSketch(object):
     def size(self):
         """
         Returns current size of the Count-min Sketch table in bytes.
-        Does *not* include additional constant overhead used by parameter variables and HLL table, totalling less than 33KB.
+        Does *not* include additional constant overhead used by parameter variables and HLL table, totalling less than 65KB.
         """
-        return self.width * self.depth * self.cell_size
+        return self.width * self.depth * self.cell_size_v
