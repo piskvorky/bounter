@@ -5,14 +5,12 @@ different parameters.
 For each run of bounter, compares the results to reference counter w.r.t. phraser collocation algorithm.
 """
 
-# from bounter import CountMinSketch as CountMinSketch
-# from bounter import CountMinSketch as CountMinSketch
 from collections import Counter
 from timeit import default_timer as timer
 
 import smart_open
 
-from bounter import CountMinSketchC as CountMinSketch
+from bounter import CountMinSketch
 
 min_count = 5
 threshold = 10.0

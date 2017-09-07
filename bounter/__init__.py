@@ -9,5 +9,4 @@
 
 __version__ = '0.2.0'
 
-from .count_min_sketch import *
-from .count_min_sketch_c import CountMinSketch as CountMinSketchC
+from .count_min_sketch import CountMinSketch

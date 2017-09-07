@@ -1,8 +1,8 @@
 import pickle
 
-from bounter import CountMinSketchC as CMS
+from bounter import CountMinSketch as CMS
 
-filename = 'ccons.p';
+filename = 'cms.p';
 
 counter = CMS(width=1048576, depth=16, algorithm="log8")
 
