@@ -5,6 +5,18 @@
 // This code is distributed under the terms and conditions
 // from the MIT License (MIT).
 
+#include <stdlib.h>
+#include <stdint.h>
+
+static inline uint32_t rand_32b()
+{
+    uint32_t r = rand();
+    #if RAND_MAX < 0x8000
+        r += rand() << 15;
+    #endif
+    return r;
+}
+
 #include "cms_conservative.c"
 #include "cms_log8.c"
 #include "cms_log1024.c"

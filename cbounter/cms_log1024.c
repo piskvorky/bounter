@@ -17,10 +17,7 @@ static inline int CMS_VARIANT(should_inc)(CMS_CELL_TYPE value)
     {
         uint8_t shift = 33 - (value >> 10);
         uint32_t mask = 0xFFFFFFFF >> shift;
-        uint32_t r = rand();
-        if (mask & 0x00010000)
-            r += rand() << 15;
-        if (mask & r) return 0;
+        if (mask & rand_32b()) return 0;
     }
     return 1;
 }
@@ -33,7 +30,7 @@ static inline long long CMS_VARIANT(decode)(CMS_CELL_TYPE value)
         return (1024 + (value & 1023)) << ((value >> 10) - 1);
 }
 
-static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value) (CMS_CELL_TYPE v1, CMS_CELL_TYPE v2)
+static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value) (CMS_CELL_TYPE v1, CMS_CELL_TYPE v2, uint32_t merge_seed)
 {
     long long decoded = CMS_VARIANT(decode)(v1);
     decoded += CMS_VARIANT(decode)(v2);
@@ -56,9 +53,9 @@ static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value) (CMS_CELL_TYPE v1, CMS_CEL
     // In other words, 4096 + 3 (4099) becomes 4100 with p=0.75 and 4096 with p=0.25
     uint8_t shift = 33 - log_result;
     uint32_t mask = 0xFFFFFFFF >> shift;
-    uint32_t r = rand();
-    if (mask & 0x00008000)
-        r += rand() << 15;
+
+    uint32_t r;
+    MurmurHash3_x86_32  ((void *) &decoded, 8, merge_seed, (void *) &r);
     uint32_t remainder = mask & decoded;
 
     return (log_result << 10) + (h & 1023) + ((mask & r) < remainder);

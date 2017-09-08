@@ -9,16 +9,12 @@
 #define GLUE_I(x,y) GLUE(x, y)
 #define CMS_VARIANT(suffix) GLUE_I(CMS_TYPE, suffix)
 
-#include <stdint.h>
 #include <Python.h>
 #include "structmember.h"
 #include "murmur3.h"
 #include "hll.h"
 #include <math.h>
 #include <stdint.h>
-#include <stdlib.h>
-
-#include <stdio.h>
 
 typedef struct {
     PyObject_HEAD
@@ -110,11 +106,20 @@ CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
     CMS_CELL_TYPE values[32];
     uint32_t hash;
     CMS_CELL_TYPE min_value = -1;
+    long long increment = 1;
 
-    if (!PyArg_ParseTuple(args, "s#", &data, &dataLength))
+    if (!PyArg_ParseTuple(args, "s#|L", &data, &dataLength, &increment))
         return NULL;
 
-    self->total += 1;
+    if (increment <= 0)
+    {
+        char * msg = "Increment must be positive!.";
+        PyErr_SetString(PyExc_ValueError, msg);
+        return NULL;
+    }
+    Py_BEGIN_ALLOW_THREADS
+
+    self->total += increment;
 
     int i;
     for (i = 0; i < self->depth; i++)
@@ -131,14 +136,19 @@ CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
             HyperLogLog_add(&self->hll, hash);
     }
 
-    if (CMS_VARIANT(should_inc)(min_value))
+    CMS_CELL_TYPE result = min_value;
+    for (; increment > 0; increment--)
+        result += CMS_VARIANT(should_inc)(result);
+
+    if (result > min_value)
     {
         int i;
         for (i = 0; i < self->depth; i++)
             if (values[i] == min_value)
-                self->table[i][buckets[i]] = min_value + 1;
+                self->table[i][buckets[i]] = result;
     }
 
+    Py_END_ALLOW_THREADS
     Py_INCREF(Py_None);
     return Py_None;
 };
@@ -185,7 +195,7 @@ CMS_VARIANT(_total)(CMS_TYPE *self, PyObject *args)
    return Py_BuildValue("i", self->total);
 }
 
-static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value) (CMS_CELL_TYPE v1, CMS_CELL_TYPE v2);
+static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value) (CMS_CELL_TYPE v1, CMS_CELL_TYPE v2, uint32_t merge_seed);
 
 /**
   * Merges another CMS instance into this one.
@@ -206,19 +216,24 @@ CMS_VARIANT(_merge)(CMS_TYPE *self, PyObject *args)
         PyErr_SetString(PyExc_ValueError, msg);
         return NULL;
     }
+
+    Py_BEGIN_ALLOW_THREADS
     uint32_t i,j;
+    uint32_t merge_seed = rand_32b();
     for (i = 0; i < self->depth; i++)
     {
         for (j = 0; j < self->width; j++)
         {
             CMS_CELL_TYPE v1 = self->table[i][j];
             CMS_CELL_TYPE v2 = other->table[i][j];
-            self->table[i][j] = CMS_VARIANT(_merge_value)(v1, v2);
+            self->table[i][j] = CMS_VARIANT(_merge_value)(v1, v2, merge_seed);
         }
     }
 
     self->total += other->total;
     HyperLogLog_merge(&self->hll, &other->hll);
+
+    Py_END_ALLOW_THREADS
     Py_INCREF(Py_None);
     return Py_None;
 }

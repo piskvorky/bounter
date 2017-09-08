@@ -14,7 +14,7 @@ from bounter import CountMinSketch
 
 min_count = 5
 threshold = 10.0
-articles = 400
+articles = 200
 wiki_file = 'C:/rare/corpus/wiki/title_tokens.txt.gz'
 
 wiki = smart_open.smart_open(wiki_file)
@@ -40,22 +40,23 @@ class Reference(object):
         return self.card
 
 
-def load_single(counter, unigrams=None):
+def load_double(counter, counter2, unigrams=None):
     wiki.seek(0)
-    loaded_articles = 0
     words = 0
-    for lineno, line in enumerate(wiki):
-        loaded_articles += 1
-        last_word = None
-        for word in line.decode().split('\t')[1].split():
-            if unigrams is not None:
-                unigrams[word] += 1
-            if last_word:
-                words += 1
-                counter.increment(last_word + ' ' + word)
-            last_word = word
-        if loaded_articles >= articles:
-            break
+    for current in (counter, counter2):
+        loaded_articles = 0
+        for lineno, line in enumerate(wiki):
+            loaded_articles += 1
+            last_word = None
+            for word in line.decode().split('\t')[1].split():
+                if unigrams is not None:
+                    unigrams[word] += 1
+                if last_word:
+                    words += 1
+                    current.increment(last_word + ' ' + word)
+                last_word = word
+            if loaded_articles >= articles:
+                break
     return counter
 
 
@@ -107,18 +108,24 @@ def compare_single(counter, reference, unigrams):
     return (deviation, precision, recall, f1)
 
 
-def test_single(counter, reference, unigrams):
+def t_double(counter, counter2, reference, unigrams):
     start = timer()
-    load_single(counter)
+    load_double(counter, counter2)
     end = timer()
+    loadtime = end - start
+    start = timer()
+    counter.update(counter2)
+    end = timer()
+    mergetime = end - start
+
     (deviation, precision, recall, f1) = compare_single(counter, reference, unigrams)
-    return (end - start, deviation, precision, recall, f1)
+    return (loadtime, mergetime, deviation, precision, recall, f1)
 
 
 reference = Reference()
 unigrams = Counter()
 start = timer()
-load_single(reference, unigrams)
+load_double(reference, reference, unigrams)
 end = timer()
 print("Loaded %d bigrams (%d distinct) in %s" % (reference.sum, reference.cardinality(), end - start))
 
@@ -130,8 +137,10 @@ for width in sizes:
     for algorithm in ['conservative', 'log1024', 'log8']:
         for depth in [8]:
             cms = CountMinSketch(width=width, depth=depth, algorithm=algorithm)
-            (time, deviation, precision, recall, f1) = test_single(cms, reference, unigrams)
-            print("%d\t%d\t%d\t%s\t%d\t%d\t%f\t%f\t%f\t%f\t%s" %
+            cms2 = CountMinSketch(width=width, depth=depth, algorithm=algorithm)
+            (time, mergetime, deviation, precision, recall, f1) = t_double(cms, cms2, reference, unigrams)
+            print("%d\t%d\t%d\t%s\t%d\t%d\t%f\t%f\t%f\t%f\t%s\t%s" %
                   (
-                  cms.size(), cms.cardinality(), cms.total(), algorithm, width, depth, deviation, precision, recall, f1,
-                  time))
+                      cms.size(), cms.cardinality(), cms.total(), algorithm, width, depth, deviation, precision, recall,
+                      f1,
+                      time, mergetime))

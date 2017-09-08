@@ -7,7 +7,10 @@
 # This code is distributed under the terms and conditions
 # from the MIT License (MIT).
 
+from collections import Mapping
+
 import CMSC
+
 
 class CountMinSketch(object):
     """
@@ -69,6 +72,10 @@ class CountMinSketch(object):
         else:
             self.cms = CMSC.CMS_Conservative(width=self.width, depth=self.depth)
 
+        # optimize calls by directly binding to C implementation
+        self.increment = self.cms.increment
+        self.__getitem__ = self.cms.get
+
     @staticmethod
     def cell_size(algorithm='conservative'):
         if str(algorithm).lower() == 'log8':
@@ -102,6 +109,18 @@ class CountMinSketch(object):
 
     def merge(self, other):
         self.cms.merge(other.cms)
+
+    def update(self, iterable):
+        selfinc = self.increment
+        if iterable is not None:
+            if isinstance(iterable, CountMinSketch):
+                self.merge(iterable)
+            elif isinstance(iterable, Mapping):
+                for elem, count in iterable.items():
+                    selfinc(str(elem), count)
+            else:
+                for elem in iterable:
+                    selfinc(str(elem))
 
     def size(self):
         """
