@@ -144,7 +144,7 @@ CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
     {
         int i;
         for (i = 0; i < self->depth; i++)
-            if (values[i] == min_value)
+            if (values[i] < result)
                 self->table[i][buckets[i]] = result;
     }
 
