@@ -6,8 +6,8 @@ Bounded Counter – Count-min Sketch frequency estimation for large sets
 Count frequencies in massive data sets using fixed memory footprint with a smart
 [Count-min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) implementation.
 
-Contains implementation of the basic and conservative-update Count-min Sketch table, as well as our own implementation
-using logarithmic probabilistic counter for reducing the space requirement (*logcons1024*).
+Contains implementation of Count-min Sketch table with conservative update, as well as our own implementation
+using logarithmic probabilistic counter for reducing the space requirement (*log1024*).
 
 A [hyperloglog](https://github.com/ascv/HyperLogLog) counter is used to estimate the cardinality of the set of elements (how many distinct elements are tracked).
 
@@ -24,7 +24,7 @@ cms.increment("foo")
 print(cms["foo"]) # 2
 print(cms["bar"]) # 1
 print(cms.cardinality()) # 2
-print(cms.sum) # 3
+print(cms.total()) # 3
 ```
 
 Parameters
@@ -42,16 +42,12 @@ Parameters
     Using more than 8 is wasteful, better put that memory
     in width instead or use 'basic' or 'conservative' algorithms instead.
 -   **Algorithm**: There are several algorithms available:
-    -   *basic* straightforward implementation of the Count-Min Sketch as described on
-        [Wikipedia](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) with a cell size of 4 bytes.
-    -   *conservative* variant of the algorithm using a simple optimization which is also described on Wikipedia. Also
-        uses 4 bytes per cell.
-    -   *logcounter8* is a probabilistic counter with a value that fits into 1 byte. Values of this counter are usually
-        off by +/- 30%. This can be used for rough estimations for extremely large sets.
-    -   *logcounter1024* is a probabilistic counter with a value that fits into 2 bytes. Values of this counter are usually
-        off by +/- 2%.
-    -   *logcons1024* is a conservative-update upgrade of 'logcounter1024' which offers substantially better precision of
-        the structure.
+    -   *conservative* Count-min Sketch as described on as described on [Wikipedia](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch).
+        Uses 4 bytes per cell, storing values up to 2^32 - 1
+    -   *log1024* is a conservative-update probabilistic counter with a value that fits into 2 bytes. Values of this counter
+        up to 2048 are precise and larger values are off by +/- 2%. The maximum value is larger than 2^71
+    -   *log8* is a conservative-update probabilistic counter that fits into just 1 byte. Values of this counter
+        up to 8 are precise and larger values can be off by +/- 30%. The maximum value is larger than 2^33        
 
 Memory
 ------
@@ -59,11 +55,12 @@ To calculate memory footprint:
     ( width * depth * cell_size ) + HLL size
 
 Cell size is
-   - 4B for basic / conservative algorithm
-   - 1B for logcounter8
-   - 2B for logcounter1024 / logcons1024
-HLL size is 32 KB
+   - 4B for conservative algorithm
+   - 2B for log1024
+   - 1B for log8
+   
+HLL size is 64 KB
 
 Example:
-    width 2^26 (67 108 864), depth 4, logcons1024 (2B) has 2^(26 + 2 + 1) + 32 768 = 536.9 MB
+    width 2^25 (33 554 432), depth 8, logcons1024 (2B) has 2^(25 + 3 + 1) + 64 KB = 536.9 MB
     Can be pickled to disk with this exact size.
