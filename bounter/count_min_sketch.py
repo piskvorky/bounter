@@ -128,3 +128,11 @@ class CountMinSketch(object):
         Does *not* include additional constant overhead used by parameter variables and HLL table, totalling less than 65KB.
         """
         return self.width * self.depth * self.cell_size_v
+
+    def __getstate__(self):
+        return self.width, self.depth, self.cell_size_v, self.cms
+
+    def __setstate__(self, state):
+        self.width, self.depth, self.cell_size_v, self.cms = state
+        self.increment = self.cms.increment
+        self.__getitem__ = self.cms.get
