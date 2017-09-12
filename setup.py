@@ -34,7 +34,8 @@ setup(
 
     headers=['cbounter/hll.h', 'cbounter/murmur3.h'],
     ext_modules=[
-        Extension('CMSC', ['cbounter/cms_cmodule.c', 'cbounter/murmur3.c', 'cbounter/hll.c'])
+        Extension('CMSC', ['cbounter/cms_cmodule.c', 'cbounter/murmur3.c', 'cbounter/hll.c']),
+        Extension('HTC', ['cbounter/ht_cmodule.c', 'cbounter/murmur3.c'])
     ],
     packages=find_packages(),
 

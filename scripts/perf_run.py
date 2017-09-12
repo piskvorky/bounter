@@ -5,10 +5,10 @@ different parameters.
 For each run of bounter, compares the results to reference counter w.r.t. phraser collocation algorithm.
 """
 
-from collections import Counter
 from timeit import default_timer as timer
 
 import smart_open
+from HTC import HT_Basic as Counter
 
 from bounter import CountMinSketch
 
@@ -22,7 +22,7 @@ wiki = smart_open.smart_open(wiki_file)
 
 class Reference(object):
     def __init__(self):
-        self.counter = Counter()
+        self.counter = Counter(16777216)
         self.sum = 0
         self.card = 0
 
@@ -116,7 +116,7 @@ def test_single(counter, reference, unigrams):
 
 
 reference = Reference()
-unigrams = Counter()
+unigrams = Counter(16777216)
 start = timer()
 load_single(reference, unigrams)
 end = timer()
