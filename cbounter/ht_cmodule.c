@@ -9,7 +9,6 @@
 #include <stdint.h>
 #include "ht_basic.c"
 
-
 #if PY_MAJOR_VERSION >= 3
 static PyModuleDef HTC_module = {
     PyModuleDef_HEAD_INIT,

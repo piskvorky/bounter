@@ -63,3 +63,5 @@ for key in htc3:
     print(key)
 
 print("iteration finished!")
+
+htc3.histo()

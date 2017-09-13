@@ -19,7 +19,7 @@
 
 typedef struct {
     char* key;
-    uint32_t count;
+    long long count;
 } HT_VARIANT(_cell_t);
 
 typedef struct {
@@ -28,8 +28,9 @@ typedef struct {
     uint32_t hash_mask;
     uint64_t str_allocated;
     long long total;
-    uint32_t size;
+    uint32_t size; // number of allocated buckets
     HT_VARIANT(_cell_t) * table;
+    uint32_t * histo;
 } HT_TYPE;
 
 #define ITER_RESULT_KEYS 1
@@ -58,8 +59,9 @@ HT_VARIANT(_dealloc)(HT_TYPE* self)
         }
     }
 
-    // free the hashtable
+    // free the hashtable and histogram
     free(table);
+    free(self->histo);
 
     // finally, destroy itself
     #if PY_MAJOR_VERSION >= 3
@@ -97,6 +99,7 @@ HT_VARIANT(_init)(HT_TYPE *self, PyObject *args, PyObject *kwds)
     self->hash_mask = self->buckets - 1;
 
     self->table = (HT_VARIANT(_cell_t) *) calloc(self->buckets, sizeof(HT_VARIANT(_cell_t)));
+    self->histo = calloc(256, sizeof(uint32_t));
     self->total = 0;
     self->size = 0;
 
@@ -107,11 +110,17 @@ static PyMemberDef HT_VARIANT(_members[]) = {
     {NULL} /* Sentinel */
 };
 
-static inline HT_VARIANT(_cell_t) * HT_VARIANT(_find_cell)(HT_TYPE * self, char * data, uint32_t dataLength)
+static inline uint32_t HT_VARIANT(_bucket)(HT_TYPE * self, char * data, uint32_t dataLength)
 {
     uint32_t bucket;
     MurmurHash3_x86_32((void *) data, dataLength, 42, (void *) &bucket);
     bucket &= self->hash_mask;
+    return bucket;
+}
+
+static inline HT_VARIANT(_cell_t) * HT_VARIANT(_find_cell)(HT_TYPE * self, char * data, uint32_t dataLength)
+{
+    uint32_t bucket = HT_VARIANT(_bucket)(self, data, dataLength);
     const HT_VARIANT(_cell_t) * table = self->table;
 
     while (table[bucket].key && strcmp(table[bucket].key, data))
@@ -121,17 +130,52 @@ static inline HT_VARIANT(_cell_t) * HT_VARIANT(_find_cell)(HT_TYPE * self, char 
     return &table[bucket];
 }
 
+static inline uint8_t HT_VARIANT(_histo_addr)(long long value)
+{
+    if (value < 0)
+        return 0;
+    if (value < 16)
+        return value;
+    if (value >= 0x3C0000000)
+        return 255;
+
+    uint8_t log_result = 1;
+    long long h = value;
+    while (h > 15)
+    {
+        log_result += 1;
+        h = h >> 1;
+    }
+    return (log_result << 3) + (h & 7);
+}
+
+static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary);
+
+static long long HT_VARIANT(_prune_size)(HT_TYPE * self)
+{
+    uint32_t required = self->size - (self->buckets >> 1);
+    long long index = 0;
+    uint32_t removing = self->histo[0];
+
+    while (removing < required && index < 255)
+    {
+        removing += self->histo[index];
+        index++;
+    }
+    long long boundary = (index < 16) ? index : (8 + (index & 7)) << ((index >> 3) - 1);
+    return boundary - 1;
+}
+
+
 static inline HT_VARIANT(_cell_t) * HT_VARIANT(_allocate_cell)(HT_TYPE * self, char * data, uint32_t dataLength)
 {
     HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength);
 
     if (!cell->key)
     {
-        if (self->size == self->hash_mask)
+        if (self->size > (self->buckets >> 2) * 3)
         {
-            char * msg = "Table is full!";
-            PyErr_SetString(PyExc_ValueError, msg);
-            return NULL;
+            HT_VARIANT(_prune_int)(self, HT_VARIANT(_prune_size)(self));
         }
 
         self->size += 1;
@@ -139,8 +183,83 @@ static inline HT_VARIANT(_cell_t) * HT_VARIANT(_allocate_cell)(HT_TYPE * self, c
         char * key = malloc(dataLength + 1);
         memcpy(key, data, dataLength + 1);
         cell->key = key;
+        cell->count = 0;
+        self->histo[0] += 1;
     }
     return cell;
+}
+
+static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary)
+{
+    HT_VARIANT(_cell_t) * table = self->table;
+    uint32_t * histo = self->histo;
+    uint32_t size = 0;
+    uint32_t start = 0;
+    uint32_t mask = self->hash_mask;
+
+    uint32_t i;
+    for (i = 0; i < 256; i++)
+        histo[i] = 0;
+
+    // find first empty row and iterate from there
+    // if we start from an empty row, hashes from all successive allocated buckets
+    // are guaranteed to point "after" this row which ensures the invariant that
+    // all processed buckets' hashes point to buckets which have already been processed
+    while (table[start].key)
+        start++;
+
+    i = start;
+    uint32_t last_free = start;
+    do
+    {
+        i = (i + 1) & mask;
+        char * current_key = table[i].key;
+        if (current_key)
+        {
+            uint32_t data_length = strlen(current_key);
+            long long current_count = table[i].count;
+
+            if (current_count > boundary)
+            {
+                uint32_t replace = HT_VARIANT(_bucket)(self, current_key, data_length);
+
+                if (((i - last_free) & mask) > ((i - replace) & mask))
+                    replace = i;
+
+                while (replace != i && table[replace].key)
+                    replace = (replace + 1) & mask;
+
+                if (replace != i)
+                {
+                    table[replace].key = current_key;
+                    table[replace].count = current_count;
+                    table[i].key = NULL;
+                    table[i].count = 0;
+                    last_free = i;
+                }
+
+                histo[HT_VARIANT(_histo_addr)(current_count)] += 1;
+                size++;
+            }
+            else
+            {
+                self->total -= current_count;
+                self->str_allocated -= data_length + 1;
+                free(current_key);
+                table[i].key = NULL;
+                table[i].count = 0;
+                last_free = i;
+            }
+        }
+        else
+        {
+            last_free = i;
+        }
+    }
+    while (i != start);
+
+    self->size = size;
+
 }
 
 static inline int HT_VARIANT(_checkString)(char * value, uint32_t length)
@@ -181,7 +300,9 @@ HT_VARIANT(_increment)(HT_TYPE *self, PyObject *args)
 
     if (cell)
     {
+        self->histo[HT_VARIANT(_histo_addr)(cell->count)] -= 1;
         cell->count += increment;
+        self->histo[HT_VARIANT(_histo_addr)(cell->count)] += 1;
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -211,6 +332,8 @@ HT_VARIANT(_setitem)(HT_TYPE *self, PyObject *pKey, PyObject *pValue)
 
         if (cell)
         {
+            self->histo[HT_VARIANT(_histo_addr)(cell->count)] -= 1;
+            self->histo[HT_VARIANT(_histo_addr)(value)] += 1;
             self->total += value - cell->count;
             cell->count = value;
             return 0;
@@ -221,12 +344,10 @@ HT_VARIANT(_setitem)(HT_TYPE *self, PyObject *pKey, PyObject *pValue)
         HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength);
         if (cell)
         {
-            self->str_allocated -= strlen(cell->key) + 1;
-            free(cell->key);
-            cell->key = 0;
+            self->histo[HT_VARIANT(_histo_addr)(cell->count)] -= 1;
+            self->histo[0] += 1;
             self->total -= cell->count;
             cell->count = 0;
-            self->size--;
         }
         return 0;
     }
@@ -247,7 +368,7 @@ HT_VARIANT(_getitem)(HT_TYPE *self, PyObject *key)
         return NULL;
 
     HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength);
-    uint32_t value = cell ? cell->count : 0;
+    long long value = cell ? cell->count : 0;
 
     return Py_BuildValue("i", value);
 }
@@ -261,7 +382,7 @@ HT_VARIANT(_total)(HT_TYPE *self)
 static Py_ssize_t
 HT_VARIANT(_size)(HT_TYPE *self)
 {
-    return self->size;
+    return self->size - self->histo[0];
 }
 
 /* Serialization function for pickling. */
@@ -272,6 +393,7 @@ HT_VARIANT(_reduce)(HT_TYPE *self)
     HT_VARIANT(_cell_t) * table = self->table;
 
     PyObject * hashtable_row = PyByteArray_FromStringAndSize(table, self->buckets * sizeof(HT_VARIANT(_cell_t)));
+    PyObject * histo_row = PyByteArray_FromStringAndSize(self->histo, 256 * sizeof(uint32_t));
 
     PyByteArrayObject * strings_row = (PyByteArrayObject *) PyByteArray_FromStringAndSize(NULL, self->str_allocated);
 
@@ -288,7 +410,7 @@ HT_VARIANT(_reduce)(HT_TYPE *self)
         }
     }
 
-    PyObject *state = Py_BuildValue("(LLIOO)", self->total, self->str_allocated, self->size, hashtable_row, strings_row);
+    PyObject *state = Py_BuildValue("(LLIOOO)", self->total, self->str_allocated, self->size, hashtable_row, strings_row, histo_row);
     return Py_BuildValue("(OOO)", Py_TYPE(self), args, state);
 }
 
@@ -298,8 +420,10 @@ HT_VARIANT(_set_state)(HT_TYPE * self, PyObject * args)
 {
     PyObject * hashtable_row_o;
     PyObject * strings_row_o;
+    PyObject * histo_row_o;
 
-    if (!PyArg_ParseTuple(args, "(LLIOO)", &self->total, &self->str_allocated, &self->size, &hashtable_row_o, &strings_row_o))
+    if (!PyArg_ParseTuple(args, "(LLIOOO)",
+            &self->total, &self->str_allocated, &self->size, &hashtable_row_o, &strings_row_o, &histo_row_o))
         return NULL;
 
     char * hashtable_row = PyByteArray_AsString(hashtable_row_o);
@@ -331,6 +455,50 @@ HT_VARIANT(_set_state)(HT_TYPE * self, PyObject * args)
         }
     }
 
+    uint32_t * histo_row = PyByteArray_AsString(histo_row_o);
+    if (!histo_row)
+        return NULL;
+    memcpy(self->histo, histo_row, 256 * sizeof(uint32_t));
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject *
+HT_VARIANT(_print_histo)(HT_TYPE * self)
+{
+    long long i;
+    for (i = 0; i < 255; i++)
+    {
+        long long min = (i < 16) ? i : (8 + (i & 7)) << ((i >> 3) - 1);
+        long long max = (i < 16) ? i : ((8 + ((i + 1) & 7)) << (((i + 1) >> 3) - 1)) - 1;
+        printf("%lld - %lld: %lld\n", min, max, self->histo[i]);
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject *
+HT_VARIANT(_print_alloc)(HT_TYPE * self)
+{
+    long long mem = sizeof(HT_VARIANT(_cell_t)) * self->buckets;
+    mem += self->str_allocated;
+    mem += sizeof(uint32_t) * 256;
+
+    return Py_BuildValue("L", mem);
+}
+
+static PyObject *
+HT_VARIANT(_prune)(HT_TYPE * self, PyObject *args)
+{
+    long long boundary;
+
+    if (!PyArg_ParseTuple(args, "L", &boundary))
+        return NULL;
+
+    HT_VARIANT(_prune_int)(self, boundary);
+
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -351,7 +519,7 @@ PyObject* HT_VARIANT(_ITER_iternext)(HT_VARIANT(_ITER_TYPE) *self)
     HT_VARIANT(_cell_t) * table = self->hashtable->table;
     uint32_t buckets = self->hashtable->buckets;
     uint32_t i = self->i;
-    while (i < buckets && table[i].key == 0)
+    while (i < buckets && table[i].count == 0)
         i++;
 
     if (i < buckets)
@@ -473,6 +641,15 @@ static PyMethodDef HT_VARIANT(_methods)[] = {
     },
     {"items", (PyCFunction)HT_VARIANT(_HT_iter_KV), METH_NOARGS,
      "Iterates over all key-value pairs."
+    },
+    {"histo", (PyCFunction)HT_VARIANT(_print_histo), METH_NOARGS,
+     "Iterates over all key-value pairs."
+    },
+    {"prune", (PyCFunction)HT_VARIANT(_prune), METH_VARARGS,
+     "Removes all entries with count X or less."
+    },
+    {"mem", (PyCFunction)HT_VARIANT(_print_alloc), METH_NOARGS,
+     "Returns allocated memory on the heap in bytes."
     },
     {"__reduce__", (PyCFunction)HT_VARIANT(_reduce), METH_NOARGS,
      "Serialization function for pickling."
