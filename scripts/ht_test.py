@@ -1,6 +1,6 @@
 import pickle
 
-from HTC import HT_Basic as HashTable
+from htc import HT_Basic as HashTable
 
 expected = {
     'foo': 17,

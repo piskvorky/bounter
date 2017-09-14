@@ -1,9 +1,9 @@
 import pickle
 
-from HTC import HT_Basic
+from htc import HT_Basic
 
 htc = HT_Basic(buckets=16777216)
-total_length = 0;
+total_length = 0
 for i in range(10000000):
     key = 'The best number is ' + str(i)
     htc[key] = i

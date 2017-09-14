@@ -9,7 +9,7 @@
 
 from collections import Mapping
 
-import CMSC
+import cmsc
 
 
 class CountMinSketch(object):
@@ -66,11 +66,11 @@ class CountMinSketch(object):
             self.depth = depth
 
         if algorithm and str(algorithm).lower() == 'log8':
-            self.cms = CMSC.CMS_Log8(width=self.width, depth=self.depth)
+            self.cms = cmsc.CMS_Log8(width=self.width, depth=self.depth)
         elif algorithm and str(algorithm).lower() == 'log1024':
-            self.cms = CMSC.CMS_Log1024(width=self.width, depth=self.depth)
+            self.cms = cmsc.CMS_Log1024(width=self.width, depth=self.depth)
         else:
-            self.cms = CMSC.CMS_Conservative(width=self.width, depth=self.depth)
+            self.cms = cmsc.CMS_Conservative(width=self.width, depth=self.depth)
 
         # optimize calls by directly binding to C implementation
         self.increment = self.cms.increment

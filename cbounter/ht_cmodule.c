@@ -10,9 +10,9 @@
 #include "ht_basic.c"
 
 #if PY_MAJOR_VERSION >= 3
-static PyModuleDef HTC_module = {
+static PyModuleDef htc_module = {
     PyModuleDef_HEAD_INIT,
-    "HTC",
+    "htc",
     "C implementation of a hashtable for counting short strings.",
     -1,
     NULL, NULL, NULL, NULL, NULL
@@ -26,12 +26,12 @@ static PyMethodDef module_methods[] = {
 
 #if PY_MAJOR_VERSION >=3
 PyMODINIT_FUNC
-PyInit_HTC(void)
+PyInit_htc(void)
 #else
     #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
         #define PyMODINIT_FUNC void
     #endif
-PyMODINIT_FUNC initHTC(void)
+PyMODINIT_FUNC inithtc(void)
 #endif
 {
     PyObject* m;
@@ -41,13 +41,13 @@ PyMODINIT_FUNC initHTC(void)
         return NULL;
     }
 
-    m = PyModule_Create(&HTC_module);
+    m = PyModule_Create(&htc_module);
     #else
         return;
     }
 
     char *description = "C implementation of a hashtable for counting short strings";
-    m = Py_InitModule3("HTC", module_methods, description);
+    m = Py_InitModule3("htc", module_methods, description);
     #endif
 
     if (m == NULL)

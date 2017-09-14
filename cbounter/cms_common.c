@@ -327,7 +327,7 @@ static PyTypeObject CMS_VARIANT(Type) = {
     PyObject_HEAD_INIT(NULL)
     0,                               /* ob_size */
     #endif
-    "CMSC." CMS_TYPE_STRING,      /* tp_name */
+    "cmsc." CMS_TYPE_STRING,      /* tp_name */
     sizeof(CMS_TYPE),        /* tp_basicsize */
     0,                               /* tp_itemsize */
     (destructor)CMS_VARIANT(_dealloc), /* tp_dealloc */

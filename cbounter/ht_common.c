@@ -566,7 +566,7 @@ static PyTypeObject HT_VARIANT(_ITER_TYPE_Type) = {
     PyObject_HEAD_INIT(NULL)
     0,                               /* ob_size */
     #endif
-    "HTC." HT_TYPE_STRING "_iter",             /*tp_name*/
+    "htc." HT_TYPE_STRING "_iter",             /*tp_name*/
     sizeof(HT_VARIANT(_ITER_TYPE)), /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)HT_VARIANT(_ITER_dealloc), /*tp_dealloc*/
@@ -673,7 +673,7 @@ static PyTypeObject HT_VARIANT(Type) = {
     PyObject_HEAD_INIT(NULL)
     0,                               /* ob_size */
     #endif
-    "HTC." HT_TYPE_STRING,      /* tp_name */
+    "htc." HT_TYPE_STRING,      /* tp_name */
     sizeof(HT_TYPE),        /* tp_basicsize */
     0,                               /* tp_itemsize */
     (destructor)HT_VARIANT(_dealloc), /* tp_dealloc */
