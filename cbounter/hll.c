@@ -6,6 +6,7 @@
 // from the MIT License (MIT).
 //
 // Using modified code from HLL package by Joshua Andersen, also distributed under MIT License:
+// https://github.com/ascv/HyperLogLog
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 //
@@ -55,16 +56,16 @@ double HyperLogLog_cardinality(HyperLogLog *self)
     double alpha = 0.0;
     switch (self->size) {
       case 16:
-      	  alpha = 0.673;
-	      break;
+          alpha = 0.673;
+          break;
       case 32:
-	      alpha = 0.697;
-	      break;
+          alpha = 0.697;
+          break;
       case 64:
-	      alpha = 0.709;
-	      break;
+          alpha = 0.709;
+          break;
       default:
-	      alpha = 0.7213/(1.0 + 1.079/(double) self->size);
+          alpha = 0.7213/(1.0 + 1.079/(double) self->size);
           break;
     }
 
@@ -80,13 +81,13 @@ double HyperLogLog_cardinality(HyperLogLog *self)
 
     if (estimate <= 2.5 * self->size) {
         uint32_t zeros = 0;
-	uint32_t i;
+    uint32_t i;
 
-	for (i = 0; i < self->size; i++) {
-    	    if (self->registers[i] == 0) {
-    	        zeros += 1;
+    for (i = 0; i < self->size; i++) {
+            if (self->registers[i] == 0) {
+                zeros += 1;
             }
-	}
+    }
 
         if (zeros != 0) {
             double size = (double) self->size;
@@ -112,7 +113,7 @@ int HyperLogLog_merge(HyperLogLog *self, HyperLogLog *hll)
     uint32_t i;
     for (i = 0; i < self->size; i++) {
         if (self->registers[i] < hll->registers[i])
-	        self->registers[i] = hll->registers[i];
+            self->registers[i] = hll->registers[i];
     }
 
     return 0;
