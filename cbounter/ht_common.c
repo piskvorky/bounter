@@ -264,7 +264,7 @@ static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary)
 
 static inline int HT_VARIANT(_checkString)(char * value, uint32_t length)
 {
-    if (strlen(value) < length)
+    if (!value || strlen(value) < length)
     {
         char * msg = "String contains null bytes!";
         PyErr_SetString(PyExc_ValueError, msg);
@@ -275,18 +275,8 @@ static inline int HT_VARIANT(_checkString)(char * value, uint32_t length)
 
 /* Adds a string to the counter. */
 static PyObject *
-HT_VARIANT(_increment)(HT_TYPE *self, PyObject *args)
+HT_VARIANT(_increment_obj)(HT_TYPE *self, char *data, uint32_t dataLength, long long increment)
 {
-    const char *data;
-    const uint32_t dataLength;
-
-    long long increment = 1;
-
-    if (!PyArg_ParseTuple(args, "s#|L", &data, &dataLength, &increment))
-        return NULL;
-    if (!HT_VARIANT(_checkString)(data, dataLength))
-        return NULL;
-
     if (increment <= 0)
     {
         char * msg = "Increment must be positive!";
@@ -308,6 +298,23 @@ HT_VARIANT(_increment)(HT_TYPE *self, PyObject *args)
     }
 
     return NULL;
+}
+
+/* Adds a string to the counter. */
+static PyObject *
+HT_VARIANT(_increment)(HT_TYPE *self, PyObject *args)
+{
+    const char *data;
+    const uint32_t dataLength;
+
+    long long increment = 1;
+
+    if (!PyArg_ParseTuple(args, "s#|L", &data, &dataLength, &increment))
+        return NULL;
+    if (!HT_VARIANT(_checkString)(data, dataLength))
+        return NULL;
+
+    return HT_VARIANT(_increment_obj)(self, data, dataLength, increment);
 }
 
 /* Sets count for a single string. */
@@ -503,6 +510,65 @@ HT_VARIANT(_prune)(HT_TYPE * self, PyObject *args)
     return Py_None;
 }
 
+static PyObject *
+HT_VARIANT(_update)(HT_TYPE * self, PyObject *args)
+{
+    PyObject * arg;
+
+    if (!PyArg_ParseTuple(args, "O", &arg))
+        return NULL;
+
+    if (PyList_Check(arg) || PyTuple_Check(arg))
+    {
+        PyObject *iterator = PyObject_GetIter(arg);
+        if (!iterator)
+            return NULL;
+
+        PyObject *item;
+        while (item = PyIter_Next(iterator)) {
+            char *data;
+            uint32_t dataLength;
+
+            // TODO This parse is unnecessary slow. I'm looking for a way to process this as string directly
+            // that will work in both Python2 / Python3
+            if (!PyArg_Parse(item, "s#", &data, &dataLength)
+                || !HT_VARIANT(_checkString)(data, dataLength)
+                || !HT_VARIANT(_increment_obj)(self, data, dataLength, 1))
+            {
+                Py_DECREF(item);
+                Py_DECREF(iterator);
+                return NULL;
+            }
+            Py_DECREF(item);
+        }
+        Py_DECREF(iterator);
+    }
+    else if (PyMapping_Check(arg))
+    {
+        PyObject * items = PyMapping_Items(arg);
+        if (items)
+        {
+            PyObject *iterator = PyObject_GetIter(items);
+            if (!iterator) {
+                Py_DECREF(items);
+                return NULL;
+            }
+            PyObject *item;
+            while (item = PyIter_Next(iterator)) {
+                PyObject * key = PyTuple_GetItem(item, 0);
+                PyObject * value = PyTuple_GetItem(item, 1);
+                HT_VARIANT(_setitem)(self, key, value);
+                Py_DECREF(item);
+            }
+            Py_DECREF(iterator);
+            Py_DECREF(items);
+        }
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 PyObject* HT_VARIANT(_ITER_iter)(PyObject *self)
 {
   Py_INCREF(self);
@@ -641,6 +707,9 @@ static PyMethodDef HT_VARIANT(_methods)[] = {
     },
     {"items", (PyCFunction)HT_VARIANT(_HT_iter_KV), METH_NOARGS,
      "Iterates over all key-value pairs."
+    },
+    {"update", (PyCFunction)HT_VARIANT(_update), METH_VARARGS,
+     "Adds all pairs from another counter, or adds all items from an iterable."
     },
     {"histo", (PyCFunction)HT_VARIANT(_print_histo), METH_NOARGS,
      "Iterates over all key-value pairs."

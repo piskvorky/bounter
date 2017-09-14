@@ -1,7 +1,7 @@
 import math
 
 import smart_open
-from HTC import HT_Basic as HashTable
+from htc import HT_Basic as HashTable
 
 from bounter import CountMinSketch
 
@@ -12,9 +12,9 @@ def loadWiki(counter, articles=1):
     wiki = smart_open.smart_open('C:/rare/corpus/wiki/title_tokens.txt.gz')
     for lineno, line in enumerate(wiki):
         loaded_articles += 1
-        for word in line.decode().split('\t')[1].split():
-            counter.increment(word)
-            words += 1
+        line_data = line.decode().split('\t')[1].split()
+        counter.update(line_data)
+        words += len(line_data)
         if loaded_articles >= articles:
             break
         if loaded_articles % 100000 == 0:
