@@ -1,6 +1,6 @@
 import pickle
 
-from htc import HT_Basic as HashTable
+from bounter import HashTable
 
 expected = {
     'foo': 17,
