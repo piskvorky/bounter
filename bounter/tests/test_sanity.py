@@ -14,6 +14,7 @@ class TestSanityCheck(unittest.TestCase):
 		self.assertEqual(cms[1], 3)
 		self.assertEqual(cms["string"], 1)
 		self.assertEqual(cms.cardinality(), 2)
+		self.assertEqual(cms.sum, 4)
 
 
 if __name__ == '__main__':
