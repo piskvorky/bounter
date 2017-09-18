@@ -47,6 +47,7 @@ setup(
 
     license='MIT',
     platforms='any',
+    test_suite="bounter.tests",
 
     install_requires=extract_requirements(),
 
