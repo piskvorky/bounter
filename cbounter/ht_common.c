@@ -16,6 +16,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <limits.h>
 
 typedef struct {
     char* key;
@@ -51,11 +52,14 @@ HT_VARIANT(_dealloc)(HT_TYPE* self)
     HT_VARIANT(_cell_t) * table = self->table;
     // free the strings
     uint32_t i;
-    for (i = 0; i < self->buckets; i++)
+    if (self->table)
     {
-        if (table[i].key)
+        for (i = 0; i < self->buckets; i++)
         {
-            free(table[i].key);
+            if (table[i].key)
+            {
+                free(table[i].key);
+            }
         }
     }
 
@@ -83,10 +87,22 @@ static int
 HT_VARIANT(_init)(HT_TYPE *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"buckets", NULL};
-    uint32_t w;
+    long long w;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "L", kwlist,
 				      &w)) {
+        return -1;
+    }
+    if (w < 4)
+    {
+        char * msg = "The number of buckets must be at least 4!";
+        PyErr_SetString(PyExc_ValueError, msg);
+        return -1;
+    }
+    if (w > 0xFFFFFFFF)
+    {
+        char * msg = "The number of buckets is too large!";
+        PyErr_SetString(PyExc_ValueError, msg);
         return -1;
     }
 
@@ -99,6 +115,13 @@ HT_VARIANT(_init)(HT_TYPE *self, PyObject *args, PyObject *kwds)
     self->hash_mask = self->buckets - 1;
 
     self->table = (HT_VARIANT(_cell_t) *) calloc(self->buckets, sizeof(HT_VARIANT(_cell_t)));
+    if (!self->table)
+    {
+        char * msg = "Unable to allocate a table with requested size!";
+        PyErr_SetString(PyExc_MemoryError, msg);
+        return -1;
+    }
+
     self->histo = calloc(256, sizeof(uint32_t));
     self->total = 0;
     self->size = 0;
@@ -173,7 +196,7 @@ static inline HT_VARIANT(_cell_t) * HT_VARIANT(_allocate_cell)(HT_TYPE * self, c
 
     if (!cell->key)
     {
-        if (self->size > (self->buckets >> 2) * 3)
+        if (self->size >= (self->buckets >> 2) * 3)
         {
             HT_VARIANT(_prune_int)(self, HT_VARIANT(_prune_size)(self));
         }
@@ -277,19 +300,30 @@ static inline int HT_VARIANT(_checkString)(char * value, uint32_t length)
 static PyObject *
 HT_VARIANT(_increment_obj)(HT_TYPE *self, char *data, uint32_t dataLength, long long increment)
 {
-    if (increment <= 0)
+    if (increment < 0)
     {
         char * msg = "Increment must be positive!";
         PyErr_SetString(PyExc_ValueError, msg);
         return NULL;
     }
-
-    self->total += increment;
+    else if (increment == 0)
+    {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
 
     HT_VARIANT(_cell_t) * cell = HT_VARIANT(_allocate_cell)(self, data, dataLength);
 
     if (cell)
     {
+        if (cell->count > LLONG_MAX - increment)
+        {
+            char * msg = "Counter overflow!";
+            PyErr_SetString(PyExc_OverflowError, msg);
+            return NULL;
+        }
+
+        self->total += increment;
         self->histo[HT_VARIANT(_histo_addr)(cell->count)] -= 1;
         cell->count += increment;
         self->histo[HT_VARIANT(_histo_addr)(cell->count)] += 1;
@@ -334,8 +368,17 @@ HT_VARIANT(_setitem)(HT_TYPE *self, PyObject *pKey, PyObject *pValue)
     {
         if (!PyArg_Parse(pValue, "L", &value))
             return -1;
+        if (value < 0)
+        {
+            char * msg = "The counter only supports positive values!";
+            PyErr_SetString(PyExc_ValueError, msg);
+            return -1;
+        }
 
-        HT_VARIANT(_cell_t) * cell = HT_VARIANT(_allocate_cell)(self, data, dataLength);
+        // don't bother allocating a new cell when setting 0
+        HT_VARIANT(_cell_t) * cell = value
+                ? HT_VARIANT(_allocate_cell)(self, data, dataLength)
+                : HT_VARIANT(_find_cell)(self, data, dataLength);
 
         if (cell)
         {
@@ -377,7 +420,7 @@ HT_VARIANT(_getitem)(HT_TYPE *self, PyObject *key)
     HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength);
     long long value = cell ? cell->count : 0;
 
-    return Py_BuildValue("i", value);
+    return Py_BuildValue("L", value);
 }
 
 static PyObject *
@@ -396,7 +439,7 @@ HT_VARIANT(_size)(HT_TYPE *self)
 static PyObject *
 HT_VARIANT(_reduce)(HT_TYPE *self)
 {
-    PyObject *args = Py_BuildValue("(i)", self->buckets);
+    PyObject *args = Py_BuildValue("(I)", self->buckets);
     HT_VARIANT(_cell_t) * table = self->table;
 
     PyObject * hashtable_row = PyByteArray_FromStringAndSize(table, self->buckets * sizeof(HT_VARIANT(_cell_t)));
@@ -511,6 +554,12 @@ HT_VARIANT(_prune)(HT_TYPE * self, PyObject *args)
 }
 
 static PyObject *
+HT_VARIANT(_buckets)(HT_TYPE * self)
+{
+    return Py_BuildValue("I", self->buckets);
+}
+
+static PyObject *
 HT_VARIANT(_update)(HT_TYPE * self, PyObject *args)
 {
     PyObject * arg;
@@ -518,7 +567,14 @@ HT_VARIANT(_update)(HT_TYPE * self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &arg))
         return NULL;
 
-    if (PyList_Check(arg) || PyTuple_Check(arg))
+    // a string passes Mapping
+    #if PY_MAJOR_VERSION >= 3
+    int const is_string = PyBytes_Check(arg) || PyUnicode_Check(arg);
+    #else
+    int const is_string = PyString_Check(arg) || PyUnicode_Check(arg);
+    #endif
+
+    if (is_string || PyList_Check(arg) || PyTuple_Check(arg))
     {
         PyObject *iterator = PyObject_GetIter(arg);
         if (!iterator)
@@ -555,14 +611,22 @@ HT_VARIANT(_update)(HT_TYPE * self, PyObject *args)
             }
             PyObject *item;
             while (item = PyIter_Next(iterator)) {
-                PyObject * key = PyTuple_GetItem(item, 0);
-                PyObject * value = PyTuple_GetItem(item, 1);
-                HT_VARIANT(_setitem)(self, key, value);
+                HT_VARIANT(_increment)(self, item);
                 Py_DECREF(item);
             }
             Py_DECREF(iterator);
             Py_DECREF(items);
         }
+        else
+        {
+            return NULL;
+        }
+    }
+    else
+    {
+        char * msg = "Unsupported argument type!";
+        PyErr_SetString(PyExc_TypeError, msg);
+        return NULL;
     }
 
     Py_INCREF(Py_None);
@@ -716,6 +780,9 @@ static PyMethodDef HT_VARIANT(_methods)[] = {
     },
     {"prune", (PyCFunction)HT_VARIANT(_prune), METH_VARARGS,
      "Removes all entries with count X or less."
+    },
+    {"buckets", (PyCFunction)HT_VARIANT(_buckets), METH_NOARGS,
+     "Returns the total number of buckets in the hashtable."
     },
     {"mem", (PyCFunction)HT_VARIANT(_print_alloc), METH_NOARGS,
      "Returns allocated memory on the heap in bytes."
