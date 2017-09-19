@@ -7,6 +7,7 @@
 # This code is distributed under the terms and conditions
 # from the MIT License (MIT).
 
+import os
 import pickle
 import unittest
 
@@ -22,6 +23,10 @@ class HashTableItemsTest(unittest.TestCase):
 
     def setUp(self):
         self.ht = HashTable(64)
+
+    def tearDown(self):
+        if os.path.isfile(filename):
+            os.remove(filename)
 
     def check_hashtable(self, reloaded):
         self.assertEqual(len(reloaded), len(self.ht))
