@@ -2,12 +2,13 @@ Changes
 ===========
 
 ## 0.2.0, 2017-09-01
-* Count-min Sketch implemented in C with no external library dependencies 
-* Removed weak algorithms, remaining 3 are all versions with conservative update
+* Added a fast HashTable counter implemented in C that removes low-count entries when it is running out of memory.    
+* Count-Min Sketch (CMS) implemented in C with no external library dependencies 
+* Removed weak CMS algorithms, remaining 3 are all versions with conservative update
 * embedded HLL inside the project
-* added merge of 2 Count-min Sketch structures
-* added update()
-* added increment(key, x) to increase by x with one call
+* added merge of 2 CMS structures
+* added update() to CMS
+* added increment(key, x) to CMS to increase by x with one call
 
 
 ## 0.1.1, 2017-09-01

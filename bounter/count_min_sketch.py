@@ -9,7 +9,7 @@
 
 from collections import Mapping
 
-import CMSC
+import cmsc
 
 
 class CountMinSketch(object):
@@ -96,11 +96,11 @@ class CountMinSketch(object):
             self.depth = depth
 
         if algorithm and str(algorithm).lower() == 'log8':
-            self.cms = CMSC.CMS_Log8(width=self.width, depth=self.depth)
+            self.cms = cmsc.CMS_Log8(width=self.width, depth=self.depth)
         elif algorithm and str(algorithm).lower() == 'log1024':
-            self.cms = CMSC.CMS_Log1024(width=self.width, depth=self.depth)
+            self.cms = cmsc.CMS_Log1024(width=self.width, depth=self.depth)
         elif algorithm and str(algorithm).lower() == 'conservative':
-            self.cms = CMSC.CMS_Conservative(width=self.width, depth=self.depth)
+            self.cms = cmsc.CMS_Conservative(width=self.width, depth=self.depth)
         else:
             raise ValueError("Unsupported algorithm! Use 'conservative', 'log8', or 'log1024'!");
 
