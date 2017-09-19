@@ -21,7 +21,8 @@ class HashTablePruningTest(unittest.TestCase):
         ht = HashTable(4)
 
         # Adds elements one by one. d replaces 'e', then 'e' replaces 'b'
-        ht.update({'e': 1, 'a': 3, 'b': 2, 'd': 5})
+        ht.update({'e': 1, 'a': 3, 'b': 2})
+        ht.update({'d': 5})
         ht.update({'e': 4})
         self.assertEqual(set(ht.items()), set({'a': 3, 'd': 5, 'e': 4}.items()))
         self.assertEqual(len(ht), 3, "The number of elements after pruning should be 3")

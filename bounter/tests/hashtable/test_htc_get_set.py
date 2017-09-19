@@ -7,6 +7,7 @@
 # This code is distributed under the terms and conditions
 # from the MIT License (MIT).
 
+import sys
 import unittest
 
 from bounter import HashTable
@@ -152,9 +153,15 @@ class HashTableGetSetTest(unittest.TestCase):
     def test_set_float_value(self):
         """
         Negative test: float values are not supported and yield TypeError
+        In Python 2, float values are converted to integers automatically without error, this is a "feature" of argument
+        parsing.
         """
+        if sys.version_info < (3, 0):
+            return
+
         with self.assertRaises(TypeError):
-            self.ht['foo'] = 42.0
+            self.ht['foo'] = float(42.0)
+
 
     def test_set_string_value(self):
         """

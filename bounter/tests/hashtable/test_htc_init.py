@@ -26,14 +26,6 @@ class HashTableInitTest(unittest.TestCase):
         self.assertEqual(HashTable(2 ** 16).buckets(), 2 ** 16)
         self.assertEqual(HashTable(2 ** 24 - 1).buckets(), 2 ** 23)
 
-    def test_too_many_buckets(self):
-        """
-        Negative test for initialization with too many buckets (2 ** 31).
-        The table would take 32 GB of memory. Computers which CAN allocate 32 GB with calloc will fail this test.
-        """
-        with self.assertRaises(MemoryError):
-            HashTable(2 ** 31)
-
     def test_invalid_buckets_init(self):
         """
         Negative test for initialization with too few buckets

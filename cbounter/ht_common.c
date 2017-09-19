@@ -222,8 +222,6 @@ static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary)
     uint32_t start = 0;
     uint32_t mask = self->hash_mask;
 
-    printf("Pruning with %d and size %d\n", boundary, self->size);
-
     uint32_t i;
     for (i = 0; i < 256; i++)
         histo[i] = 0;
