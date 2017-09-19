@@ -111,11 +111,16 @@ CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "s#|L", &data, &dataLength, &increment))
         return NULL;
 
-    if (increment <= 0)
+    if (increment < 0)
     {
         char * msg = "Increment must be positive!.";
         PyErr_SetString(PyExc_ValueError, msg);
         return NULL;
+    }
+    else if (increment == 0)
+    {
+        Py_INCREF(Py_None);
+        return Py_None;
     }
     Py_BEGIN_ALLOW_THREADS
 

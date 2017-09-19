@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+
 static inline uint32_t rand_32b()
 {
     uint32_t r = rand();
