@@ -72,6 +72,21 @@ class HashTableUpdateTest(unittest.TestCase):
         self.assertEqual(self.ht['b'], 3)
         self.assertEqual(set(self.ht.items()), set(data.items()))
 
+    def test_update_with_hashtable(self):
+        """
+        Update with a dictionary and test against it using set representation
+        """
+        data1 = {'a': 1, 'b': 3, 'c': 2, 'd': 5}
+        data2 = {'a': 18, 'b': 4, 'c': 6, 'e': 13}
+        expected = {'a': 19, 'b': 7, 'c': 8, 'd': 5, 'e': 13}
+
+        self.ht.update(data1)
+        ht2 = HashTable(64)
+        ht2.update(data2)
+
+        self.ht.update(ht2)
+
+        self.assertEqual(set(self.ht.items()), set(expected.items()))
 
 if __name__ == '__main__':
     unittest.main()

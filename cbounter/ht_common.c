@@ -178,7 +178,7 @@ static long long HT_VARIANT(_prune_size)(HT_TYPE * self)
 {
     uint32_t required = self->size - (self->buckets >> 1);
     long long index = 0;
-    uint32_t removing = self->histo[0];
+    uint32_t removing = 0;
 
     while (removing < required && index < 255)
     {
@@ -199,6 +199,8 @@ static inline HT_VARIANT(_cell_t) * HT_VARIANT(_allocate_cell)(HT_TYPE * self, c
         if (self->size >= (self->buckets >> 2) * 3)
         {
             HT_VARIANT(_prune_int)(self, HT_VARIANT(_prune_size)(self));
+            // After pruning, we have to look for the ideal spot again, since a better slot might have opened
+            cell = HT_VARIANT(_find_cell)(self, data, dataLength);
         }
 
         self->size += 1;
@@ -219,6 +221,8 @@ static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary)
     uint32_t size = 0;
     uint32_t start = 0;
     uint32_t mask = self->hash_mask;
+
+    printf("Pruning with %d and size %d\n", boundary, self->size);
 
     uint32_t i;
     for (i = 0; i < 256; i++)
