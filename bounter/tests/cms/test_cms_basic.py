@@ -16,13 +16,18 @@ class MyClass(object):
     pass
 
 
-class HashTableSanityTest(unittest.TestCase):
+class CountMinSketchSanityCommonTest(unittest.TestCase):
     """
     Functional tests for setting and retrieving values of the counter
     """
 
+    def __init__(self, methodName='runTest', algorithm='conservative', delta=0):
+        self.algorithm = algorithm
+        self.delta = delta
+        super(CountMinSketchSanityCommonTest, self).__init__(methodName=methodName)
+
     def setUp(self):
-        self.cms = CountMinSketch(1)
+        self.cms = CountMinSketch(1, algorithm=self.algorithm)
 
     def test_unknown_is_zero(self):
         self.assertEqual(self.cms['foo'], 0)
@@ -67,8 +72,8 @@ class HashTableSanityTest(unittest.TestCase):
         self.cms.increment('foo', foo_value)
         self.cms.increment('bar', bar_value)
 
-        self.assertEqual(self.cms['foo'], foo_value)
-        self.assertEqual(self.cms['bar'], bar_value)
+        self.assertAlmostEqual(self.cms['foo'], foo_value, delta=self.delta * foo_value)
+        self.assertAlmostEqual(self.cms['bar'], bar_value, delta=self.delta * bar_value)
 
     def test_repeat_increment(self):
         """
@@ -151,7 +156,7 @@ class HashTableSanityTest(unittest.TestCase):
     def test_increment_big_number(self):
         big_number = 127451
         self.cms.increment('big number', big_number)
-        self.assertEqual(self.cms['big number'], big_number)
+        self.assertAlmostEqual(self.cms['big number'], big_number, delta=self.delta * big_number)
 
     def test_increment_negative(self):
         """
@@ -181,6 +186,28 @@ class HashTableSanityTest(unittest.TestCase):
         self.cms.increment('foo', 0)
         self.assertEqual(self.cms['foo'], 1)
 
+
+class CountMinSketchSanityConservativeTest(CountMinSketchSanityCommonTest):
+    def __init__(self, methodName='runTest'):
+        super(CountMinSketchSanityConservativeTest, self).__init__(methodName=methodName, algorithm='conservative')
+
+
+class CountMinSketchSanityLog1024Test(CountMinSketchSanityCommonTest):
+    def __init__(self, methodName='runTest'):
+        super(CountMinSketchSanityLog1024Test, self).__init__(methodName=methodName, algorithm='log1024', delta=0.15)
+
+
+class CountMinSketchSanityLog8Test(CountMinSketchSanityCommonTest):
+    def __init__(self, methodName='runTest'):
+        super(CountMinSketchSanityLog8Test, self).__init__(methodName=methodName, algorithm='log8', delta=0.7)
+
+
+def load_tests(loader, tests, pattern):
+    test_cases = unittest.TestSuite()
+    test_cases.addTests(loader.loadTestsFromTestCase(CountMinSketchSanityConservativeTest))
+    test_cases.addTests(loader.loadTestsFromTestCase(CountMinSketchSanityLog1024Test))
+    test_cases.addTests(loader.loadTestsFromTestCase(CountMinSketchSanityLog8Test))
+    return test_cases
 
 if __name__ == '__main__':
     unittest.main()

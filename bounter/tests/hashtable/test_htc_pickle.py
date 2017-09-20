@@ -16,7 +16,7 @@ from bounter import HashTable
 filename = 'htc-test.pickle'
 
 
-class HashTableItemsTest(unittest.TestCase):
+class HashTablePickleTest(unittest.TestCase):
     """
     Functional tests for determining size (cardinality) of hashtable and iterations.
     """

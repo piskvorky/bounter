@@ -73,6 +73,9 @@ class CountMinSketch(object):
         cell_size = CountMinSketch.cell_size(algorithm);
         self.cell_size_v = cell_size
 
+        if not isinstance(size_mb, int):
+            raise ValueError("size_mb must be an integer!")
+
         if width is None and depth is None:
             self.width = 1 << (size_mb * (2 ** 16) // cell_size).bit_length()
             self.depth = (size_mb * (2 ** 20)) // (self.width * cell_size)
