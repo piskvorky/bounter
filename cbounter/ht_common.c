@@ -565,66 +565,78 @@ static PyObject *
 HT_VARIANT(_update)(HT_TYPE * self, PyObject *args)
 {
     PyObject * arg;
+    PyObject * should_dealloc = NULL;
 
     if (!PyArg_ParseTuple(args, "O", &arg))
         return NULL;
 
-    // a string passes Mapping
-    #if PY_MAJOR_VERSION >= 3
-    int const is_string = PyBytes_Check(arg) || PyUnicode_Check(arg);
-    #else
-    int const is_string = PyString_Check(arg) || PyUnicode_Check(arg);
-    #endif
-
-    if (is_string || PyList_Check(arg) || PyTuple_Check(arg))
+    if (PyDict_Check(arg) || PyObject_TypeCheck(arg, ((PyObject *) self)->ob_type))
     {
-        PyObject *iterator = PyObject_GetIter(arg);
-        if (!iterator)
-            return NULL;
+        arg = PyMapping_Items(arg);
+        should_dealloc = arg;
+    }
 
+    PyObject * iterator = PyObject_GetIter(arg);
+    if (iterator)
+    {
         PyObject *item;
-        while (item = PyIter_Next(iterator)) {
-            char *data;
-            uint32_t dataLength;
-
-            // TODO This parse is unnecessary slow. I'm looking for a way to process this as string directly
-            // that will work in both Python2 / Python3
-            if (!PyArg_Parse(item, "s#", &data, &dataLength)
-                || !HT_VARIANT(_checkString)(data, dataLength)
-                || !HT_VARIANT(_increment_obj)(self, data, dataLength, 1))
+        char *data;
+        uint32_t dataLength;
+        while (item = PyIter_Next(iterator))
+        {
+            if (PyTuple_Check(item))
             {
-                Py_DECREF(item);
-                Py_DECREF(iterator);
-                return NULL;
+                printf("TUPLE\n");
+                if (!HT_VARIANT(_increment)(self, item))
+                {
+                    Py_DECREF(item);
+                    Py_DECREF(iterator);
+                    if (should_dealloc)
+                        Py_DECREF(should_dealloc);
+                    return NULL;
+                }
             }
-            Py_DECREF(item);
+            else
+            {
+                data = NULL;
+                if (PyUnicode_Check(item)) {
+                    data = PyUnicode_AsUTF8AndSize(item, &dataLength);
+                }
+                else { /* read-only bytes-like object */
+                    PyBufferProcs *pb = Py_TYPE(item)->tp_as_buffer;
+                    Py_buffer view;
+                    char release_failure = -1;
+
+                    if ((pb == NULL || pb->bf_releasebuffer == NULL)
+                           && ((release_failure = PyObject_GetBuffer(item, &view, PyBUF_SIMPLE)) == 0)
+                           && PyBuffer_IsContiguous(&view, 'C'))
+                    {
+                        data = view.buf;
+                        dataLength = view.len;
+                    }
+                    if (!release_failure)
+                        PyBuffer_Release(&view);
+                }
+                if (!data
+                    || !HT_VARIANT(_checkString)(data, dataLength)
+                    || !HT_VARIANT(_increment_obj)(self, data, dataLength, 1))
+                {
+                    Py_DECREF(item);
+                    Py_DECREF(iterator);
+                    if (should_dealloc)
+                        Py_DECREF(should_dealloc);
+                    return NULL;
+                }
+                Py_DECREF(item);
+            }
         }
         Py_DECREF(iterator);
     }
-    else if (PyMapping_Check(arg))
-    {
-        PyObject * items = PyMapping_Items(arg);
-        if (items)
-        {
-            PyObject *iterator = PyObject_GetIter(items);
-            if (!iterator) {
-                Py_DECREF(items);
-                return NULL;
-            }
-            PyObject *item;
-            while (item = PyIter_Next(iterator)) {
-                HT_VARIANT(_increment)(self, item);
-                Py_DECREF(item);
-            }
-            Py_DECREF(iterator);
-            Py_DECREF(items);
-        }
-        else
-        {
-            return NULL;
-        }
-    }
-    else
+
+    if (should_dealloc)
+        Py_DECREF(should_dealloc);
+
+    if (!iterator)
     {
         char * msg = "Unsupported argument type!";
         PyErr_SetString(PyExc_TypeError, msg);

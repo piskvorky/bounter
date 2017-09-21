@@ -41,6 +41,15 @@ class CountMinSketchSanityCommonTest(unittest.TestCase):
         self.assertEqual(self.cms['foo'], 3)
         self.assertEqual(self.cms['bar'], 1)
 
+    def test_increment_bytes(self):
+        self.cms.increment('foo')
+        self.cms.increment('bar')
+        self.cms.increment(b'foo')
+        self.cms.increment('foo')
+
+        self.assertEqual(self.cms['foo'], 3)
+        self.assertEqual(self.cms[b'foo'], 3)
+
     def test_total(self):
         self.assertEqual(self.cms.total(), 0)
 

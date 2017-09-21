@@ -61,6 +61,12 @@ class HashTableUpdateTest(unittest.TestCase):
         self.assertEqual(self.ht['foo'], 4)
         self.assertEqual(self.ht['bar'], 2)
 
+    def test_update_bytes(self):
+        tuple = ('foo', 'bar', b'foo')
+        self.ht.update(tuple)
+        self.assertEqual(self.ht['foo'], 2)
+        self.assertEqual(self.ht[b'foo'], 2)
+
     def test_update_with_dictionary(self):
         """
         Update with a dictionary and test against it using set representation

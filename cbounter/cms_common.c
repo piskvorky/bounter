@@ -96,20 +96,13 @@ static PyMemberDef CMS_VARIANT(_members[]) = {
 
 static inline int CMS_VARIANT(should_inc)(CMS_CELL_TYPE value);
 
-/* Adds an element to the frequency estimator. */
-static PyObject *
-CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
+static inline PyObject *
+CMS_VARIANT(_increment_obj)(CMS_TYPE *self, char *data, uint32_t dataLength, long long increment)
 {
-    const char *data;
-    const uint32_t dataLength;
     uint32_t buckets[32];
     CMS_CELL_TYPE values[32];
     uint32_t hash;
     CMS_CELL_TYPE min_value = -1;
-    long long increment = 1;
-
-    if (!PyArg_ParseTuple(args, "s#|L", &data, &dataLength, &increment))
-        return NULL;
 
     if (increment < 0)
     {
@@ -156,7 +149,21 @@ CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
     Py_END_ALLOW_THREADS
     Py_INCREF(Py_None);
     return Py_None;
-};
+}
+
+/* Adds an element to the frequency estimator. */
+static PyObject *
+CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
+{
+    const char *data;
+    const uint32_t dataLength;
+    long long increment = 1;
+
+    if (!PyArg_ParseTuple(args, "s#|L", &data, &dataLength, &increment))
+        return NULL;
+
+    return CMS_VARIANT(_increment_obj)(self, data, dataLength, increment);
+}
 
 static inline long long CMS_VARIANT(decode)(CMS_CELL_TYPE value);
 
@@ -206,6 +213,7 @@ static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value) (CMS_CELL_TYPE v1, CMS_CEL
   * Merges another CMS instance into this one.
   * This instance is incremented by values of the other instance, which remains unaffected
   */
+static PyObject *
 CMS_VARIANT(_merge)(CMS_TYPE *self, PyObject *args)
 {
     CMS_TYPE *other;
@@ -239,6 +247,89 @@ CMS_VARIANT(_merge)(CMS_TYPE *self, PyObject *args)
     HyperLogLog_merge(&self->hll, &other->hll);
 
     Py_END_ALLOW_THREADS
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject *
+CMS_VARIANT(_update)(CMS_TYPE * self, PyObject *args)
+{
+    PyObject * arg;
+    PyObject * should_dealloc = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &arg))
+        return NULL;
+
+    if (PyDict_Check(arg))
+    {
+        arg = PyDict_Items(arg);
+        should_dealloc = arg;
+    }
+    PyObject * iterator = PyObject_GetIter(arg);
+    if (iterator)
+    {
+        PyObject *item;
+        char *data;
+        uint32_t dataLength;
+        while (item = PyIter_Next(iterator))
+        {
+            if (PyTuple_Check(item))
+            {
+                if (!CMS_VARIANT(_increment)(self, item))
+                {
+                    Py_DECREF(item);
+                    Py_DECREF(iterator);
+                    if (should_dealloc)
+                        Py_DECREF(should_dealloc);
+                    return NULL;
+                }
+            }
+            else
+            {
+                data = NULL;
+                if (PyUnicode_Check(item)) {
+                    data = PyUnicode_AsUTF8AndSize(item, &dataLength);
+                }
+                else { /* read-only bytes-like object */
+                    PyBufferProcs *pb = Py_TYPE(item)->tp_as_buffer;
+                    Py_buffer view;
+                    char release_failure = -1;
+
+                    if ((pb == NULL || pb->bf_releasebuffer == NULL)
+                           && ((release_failure = PyObject_GetBuffer(item, &view, PyBUF_SIMPLE)) == 0)
+                           && PyBuffer_IsContiguous(&view, 'C'))
+                    {
+                        data = view.buf;
+                        dataLength = view.len;
+                    }
+                    if (!release_failure)
+                        PyBuffer_Release(&view);
+                }
+                if (!data
+                    || !CMS_VARIANT(_increment_obj)(self, data, dataLength, 1))
+                {
+                    Py_DECREF(item);
+                    Py_DECREF(iterator);
+                    if (should_dealloc)
+                        Py_DECREF(should_dealloc);
+                    return NULL;
+                }
+                Py_DECREF(item);
+            }
+        }
+        Py_DECREF(iterator);
+    }
+
+    if (should_dealloc)
+        Py_DECREF(should_dealloc);
+
+    if (!iterator)
+    {
+        char * msg = "Unsupported argument type!";
+        PyErr_SetString(PyExc_TypeError, msg);
+        return NULL;
+    }
+
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -315,6 +406,9 @@ static PyMethodDef CMS_VARIANT(_methods)[] = {
     },
     {"merge", (PyCFunction)CMS_VARIANT(_merge), METH_VARARGS,
     "Merges another CMS instance into this one."
+    },
+    {"update", (PyCFunction)CMS_VARIANT(_update), METH_VARARGS,
+    "Updates this CMS with values from another CMS, iterable, or dictionary."
     },
     {"__reduce__", (PyCFunction)CMS_VARIANT(_reduce), METH_NOARGS,
      "Serialization function for pickling."

@@ -42,6 +42,18 @@ class HashTableGetSetTest(unittest.TestCase):
         self.assertEqual(self.ht['max'], long_long_max)
         self.assertEqual(self.ht['bar'], bar_value)
 
+    def test_set_and_get_bytes(self):
+        first_value = 42
+        second_value = 53
+
+        self.ht[b'foo'] = first_value
+        self.assertEqual(self.ht['foo'], first_value)
+        self.assertEqual(self.ht[b'foo'], first_value)
+
+        self.ht['foo'] = second_value
+        self.assertEqual(self.ht['foo'], second_value)
+        self.assertEqual(self.ht[b'foo'], second_value)
+
     def test_replace(self):
         """
         Test that a set successfully replaces existing value of the counter

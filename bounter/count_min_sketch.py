@@ -7,8 +7,6 @@
 # This code is distributed under the terms and conditions
 # from the MIT License (MIT).
 
-from collections import Mapping
-
 import cmsc
 
 
@@ -109,7 +107,6 @@ class CountMinSketch(object):
 
         # optimize calls by directly binding to C implementation
         self.increment = self.cms.increment
-        self.__getitem__ = self.cms.get
 
     @staticmethod
     def cell_size(algorithm='conservative'):
@@ -128,10 +125,10 @@ class CountMinSketch(object):
         return width * depth * CountMinSketch.cell_size(algorithm)
 
     def increment(self, key):
-        self.cms.increment(str(key))
+        self.cms.increment(key)
 
     def __getitem__(self, key):
-        return self.cms.get(str(key))
+        return self.cms.get(key)
 
     def cardinality(self):
         """
@@ -153,16 +150,10 @@ class CountMinSketch(object):
         self.cms.merge(other.cms)
 
     def update(self, iterable):
-        selfinc = self.increment
-        if iterable is not None:
-            if isinstance(iterable, CountMinSketch):
-                self.merge(iterable)
-            elif isinstance(iterable, Mapping):
-                for elem, count in iterable.items():
-                    selfinc(str(elem), count)
-            else:
-                for elem in iterable:
-                    selfinc(str(elem))
+        if isinstance(iterable, CountMinSketch):
+            self.merge(iterable)
+        else:
+            self.cms.update(iterable)
 
     def size(self):
         """
@@ -177,4 +168,3 @@ class CountMinSketch(object):
     def __setstate__(self, state):
         self.width, self.depth, self.cell_size_v, self.cms = state
         self.increment = self.cms.increment
-        self.__getitem__ = self.cms.get
