@@ -586,7 +586,6 @@ HT_VARIANT(_update)(HT_TYPE * self, PyObject *args)
         {
             if (PyTuple_Check(item))
             {
-                printf("TUPLE\n");
                 if (!HT_VARIANT(_increment)(self, item))
                 {
                     Py_DECREF(item);
@@ -599,9 +598,16 @@ HT_VARIANT(_update)(HT_TYPE * self, PyObject *args)
             else
             {
                 data = NULL;
+                #if PY_MAJOR_VERSION >= 3
                 if (PyUnicode_Check(item)) {
                     data = PyUnicode_AsUTF8AndSize(item, &dataLength);
                 }
+                #else
+                if (PyString_Check(item)) {
+                    if (PyString_AsStringAndSize(item, &data, &dataLength))
+                        data = NULL;
+                }
+                #endif
                 else { /* read-only bytes-like object */
                     PyBufferProcs *pb = Py_TYPE(item)->tp_as_buffer;
                     Py_buffer view;
