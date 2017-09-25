@@ -69,7 +69,56 @@ Example:
 
 Performance
 -----------
+### Testing on Wikipedia set
+We have counted unigrams and bigrams in English Wikipedia dataset to evaluate the counters.
+In each case, we have counted the entire data set into all bounter structures:
 
+```python
+    with smart_open('title_tokens.txt.gz') as wiki:
+        for lineno, line in enumerate(wiki):
+            words = line.decode().split('\t')[1].split()
+            counter.update(words)
+```
+
+Then, we've selected a random sample of words as a validation set (unigrams, resp. bigrams) and compared the real
+count of these with the structures.
+All counters use the same validation set.
+
+#### Unigrams
+The Wikipedia data set contains 7661318 distinct words in 1860927726 total words. To store all of 
+these counts efficiently (but without compression), we would need approximately 160 MB (~ 22B per word).
+
+##### Timings
+
+| Algorithm        |        Min  |         Max |     Average |
+|------------------|------------:|------------:|------------:|
+| Counter          |       379s  |        379s |        379s |
+| HashTable        |       293s  |        312s |        304s |
+| CMS Conservative |       685s  |        703s |        698s |
+| CMS log1024      |       661s  |        709s |        692s |
+| CMS log8         |       630s  |        700s |        675s |
+
+
+Python Counter (dict) uses approximately 800 MB to store this set in RAM.
+ 
 ![Precision on unigrams data](docs/bounter_unigrams_wiki.png)
+
+#### Bigrams
+The Wikipedia data set contains 179413989 distinct bigrams in 1857420106 total bigrams.
+To store all of these counts efficiently (but without compression), we would need approximately 160 MB (~ 30B per word).
+To store all of these counts properly, we would need approximately 5133 MB (without compression).
+
+Storing them all in a single Python counter would require approximately 17.2 GB RAM. 
+
+##### Timings
+
+| Algorithm        |        Min  |         Max |     Average |
+|------------------|------------:|------------:|------------:|
+| Counter          |         N/A |         N/A |         N/A |
+| HashTable        |       717s  |        945s |        811s |
+| CMS Conservative |      1028s  |       1118s |       1088s |
+| CMS log1024      |      1013s  |       1294s |       1096s |
+| CMS log8         |      1001s  |       1219s |       1103s |
+
 
 ![Precision on bigrams data](docs/bounter_bigrams_wiki.png)
