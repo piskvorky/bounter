@@ -1,15 +1,17 @@
-Bounded Counter – Count-min Sketch frequency estimation for large sets
+Bounded Counter – Frequency estimation for large sets
 ======================================================================
 
 **Work in progress!**
 
 Count frequencies in massive data sets using fixed memory footprint with a smart
-[Count-min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) implementation.
+[Count-min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) and HashTable implementation.
 
 Contains implementation of Count-min Sketch table with conservative update, as well as our own implementation
-using logarithmic probabilistic counter for reducing the space requirement (*log1024*).
+using logarithmic probabilistic counter for reducing the space requirement (*log1024, log8*).
+Uses an embedded [hyperloglog](https://github.com/ascv/HyperLogLog) counter to estimate the cardinality of the set of elements (how many distinct elements are tracked).
 
-A [hyperloglog](https://github.com/ascv/HyperLogLog) counter is used to estimate the cardinality of the set of elements (how many distinct elements are tracked).
+The package also contains a fast HashTable counter allocated with bounded memory which removes its low-count objects
+instead of expanding.
 
 ```python
 cms = CountMinSketch(size_mb=512) # Use 512 MB
@@ -64,3 +66,10 @@ HLL size is 64 KB
 Example:
     width 2^25 (33 554 432), depth 8, logcons1024 (2B) has 2^(25 + 3 + 1) + 64 KB = 536.9 MB
     Can be pickled to disk with this exact size.
+
+Performance
+-----------
+
+![Precision on unigrams data](docs/bounter_unigrams_wiki.png)
+
+![Precision on bigrams data](docs/bounter_bigrams_wiki.png)
