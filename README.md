@@ -122,3 +122,16 @@ Storing them all in a single Python counter would require approximately 17.2 GB 
 
 
 ![Precision on bigrams data](docs/bounter_bigrams_wiki.png)
+
+We used words collocations to distinguish phrases using our collected data. As a reference,
+we calculated whether bigram is a phrase using reference exact counts on a set of 2000 randomly
+chosen sample bigrams. Then we used value from our counter to determine whether the same bigram is a phrase,
+and calculated precision, recall, and F1 value for correctly characterizing phrases according to
+ reference. The following table shows the F1 values for each counter: 
+
+Algorithm | 64 MB | 128 MB | 256 MB | 512 MB | 1024 MB | 2048 MB | 4096 MB | 8192 MB
+----------|-------|--------|--------|--------|---------|---------|---------|--------
+bi_cms_conservative |  |  | 0.820 | 0.993 | 0.998 | 1 | 1 | 1
+bi_cms_log1024 |  | 0.818 | 0.987 | 0.993 | 1 | 0.995 | 0.998 | 
+bi_cms_log8 | 0.784 | 0.960 | 0.969 | 0.969 | 0.975 | 0.974 |  | 
+bi_hashtable |  | 0.917 | 0.952 | 0.978 | 0.996 | 1 | 1 |  
