@@ -106,15 +106,6 @@ class CountMinSketchUpdateCommonTest(unittest.TestCase):
 
         self.assertEqual(set(result_set), set(expected.items()))
 
-
-def load_tests(loader, tests, pattern):
-    suite = TestSuite()
-    for test_class in test_cases:
-        tests = loader.loadTestsFromTestCase(test_class)
-        suite.addTests(tests)
-    return suite
-
-
 class CountMinSketchUpdateConservativeTest(CountMinSketchUpdateCommonTest):
     def __init__(self, methodName='runTest'):
         super(CountMinSketchUpdateConservativeTest, self).__init__(methodName=methodName, algorithm='conservative')

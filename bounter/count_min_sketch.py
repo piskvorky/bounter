@@ -162,6 +162,16 @@ class CountMinSketch(object):
         """
         return self.width * self.depth * self.cell_size_v
 
+    def quality(self):
+        """
+        Returns the current estimated overflow rating of the structure, calculated as cardinality / width.
+
+        For quality < 1, the table should return results without collision bias. For quality rating up to 5, collision
+        bias is small. For a larger quality rating, the structure suffers from a considerable collision bias affecting
+         smaller values.
+        """
+        return float(self.cardinality()) / self.width
+
     def __getstate__(self):
         return self.width, self.depth, self.cell_size_v, self.cms
 
