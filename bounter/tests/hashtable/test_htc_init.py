@@ -13,18 +13,48 @@ from bounter import HashTable
 
 
 class HashTableInitTest(unittest.TestCase):
+    def test_none_init(self):
+        with self.assertRaises(ValueError,
+                               msg=("Constructor should throw ValueError for no parameters")):
+            HashTable()
+
+    def test_default_init(self):
+        """
+        Test that the table initializes itself with the number of buckets equal to the greatest power of 2 lower than the argument
+        """
+        self.assertEqual(HashTable(1).buckets(), 2 ** 15)
+        self.assertEqual(HashTable(2).buckets(), 2 ** 16)
+        self.assertEqual(HashTable(3).buckets(), 2 ** 16)
+        self.assertEqual(HashTable(15).buckets(), 2 ** 18)
+        self.assertEqual(HashTable(16).buckets(), 2 ** 19)
+        self.assertEqual(HashTable(512).buckets(), 2 ** 24)
+
+    def test_both_init(self):
+        """
+        Test that the table initializes itself with the number of buckets equal to the greatest power of 2 lower than the argument
+        """
+        self.assertEqual(HashTable(size_mb=16, buckets=1024).buckets(), 1024)
+
     def test_buckets_init(self):
         """
         Test that the table initializes itself with the number of buckets equal to the greatest power of 2 lower than the argument
         """
-        self.assertEqual(HashTable(4).buckets(), 4)
-        self.assertEqual(HashTable(5).buckets(), 4)
-        self.assertEqual(HashTable(16).buckets(), 16)
-        self.assertEqual(HashTable(17).buckets(), 16)
-        self.assertEqual(HashTable(31).buckets(), 16)
-        self.assertEqual(HashTable(2 ** 16 - 1).buckets(), 2 ** 15)
-        self.assertEqual(HashTable(2 ** 16).buckets(), 2 ** 16)
-        self.assertEqual(HashTable(2 ** 24 - 1).buckets(), 2 ** 23)
+        self.assertEqual(HashTable(buckets=4).buckets(), 4)
+        self.assertEqual(HashTable(buckets=5).buckets(), 4)
+        self.assertEqual(HashTable(buckets=16).buckets(), 16)
+        self.assertEqual(HashTable(buckets=17).buckets(), 16)
+        self.assertEqual(HashTable(buckets=31).buckets(), 16)
+        self.assertEqual(HashTable(buckets=(2 ** 16 - 1)).buckets(), 2 ** 15)
+        self.assertEqual(HashTable(buckets=(2 ** 16)).buckets(), 2 ** 16)
+        self.assertEqual(HashTable(buckets=(2 ** 24 - 1)).buckets(), 2 ** 23)
+
+    def test_invalid_default_init(self):
+        """
+        Negative test for initialization with too few buckets
+        """
+        for invalid_bucket_count in [0.5, 1.0, "foo", dict()]:
+            with self.assertRaises(TypeError, msg="Constructor should throw Type for non-numeric arguments"):
+                HashTable(buckets=invalid_bucket_count)
 
     def test_invalid_buckets_init(self):
         """
@@ -33,7 +63,7 @@ class HashTableInitTest(unittest.TestCase):
         for invalid_bucket_count in [0, 1, 2, 3, -3, 2 ** 32]:
             with self.assertRaises(ValueError,
                                    msg=("Constructor should throw ValueError for count %d" % invalid_bucket_count)):
-                HashTable(invalid_bucket_count)
+                HashTable(buckets=invalid_bucket_count)
 
 
 if __name__ == '__main__':

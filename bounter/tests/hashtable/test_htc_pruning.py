@@ -18,7 +18,7 @@ class HashTablePruningTest(unittest.TestCase):
         """
         Tests prune with a stupid table of 4 buckets, this can store at most 3 elements at once.
         """
-        ht = HashTable(4)
+        ht = HashTable(buckets=4)
 
         # Adds elements one by one. d replaces 'e', then 'e' replaces 'b'
         ht.update({'e': 1, 'a': 3, 'b': 2})
@@ -39,7 +39,7 @@ class HashTablePruningTest(unittest.TestCase):
         """
         Tests prune with table of 8 buckets, which stores at most 6 elements and prunes itself down to 4 or less.
         """
-        ht = HashTable(8)
+        ht = HashTable(buckets=8)
 
         # Init
         ht.update({'a': 3, 'b': 2, 'c': 4, 'd': 1, 'e': 5, 'f': 6})
@@ -58,13 +58,13 @@ class HashTablePruningTest(unittest.TestCase):
         self.assertEqual(set(ht.items()), set({'d': 1, 'c': 4, 'e': 5, 'f': 6}.items()))
 
     def test_prune_total(self):
-        ht = HashTable(8)
+        ht = HashTable(buckets=8)
         ht.update({'a': 3, 'b': 2, 'c': 4, 'd': 1, 'e': 5, 'f': 6})
         ht.update("xbbbd")
         self.assertEqual(ht.total(), 26)
 
     def test_prune_cardinality(self):
-        ht = HashTable(8)
+        ht = HashTable(buckets=8)
         ht.update({'a': 3, 'b': 2, 'c': 4, 'd': 1, 'e': 5, 'f': 6})
         ht.update("xbgbbd")
         self.assertEqual(ht.cardinality(), 8)

@@ -20,7 +20,7 @@ class HashTableUpdateTest(unittest.TestCase):
     """
 
     def setUp(self):
-        self.ht = HashTable(64)
+        self.ht = HashTable(buckets=64)
 
     def test_update_numbers(self):
         """

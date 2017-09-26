@@ -23,7 +23,7 @@ class HashTableIncrementTest(unittest.TestCase):
         """
         Tests increment operation
         """
-        ht = HashTable(64)
+        ht = HashTable(buckets=64)
 
         # new element
         ht.increment('New element by default')
@@ -45,7 +45,7 @@ class HashTableIncrementTest(unittest.TestCase):
         self.assertEqual(ht['3 repeated increments by 4'], 12)
 
     def test_increment_by_big_number(self):
-        ht = HashTable(64)
+        ht = HashTable(buckets=64)
 
         # increment by big number
         big_number = 68728041949
@@ -55,7 +55,7 @@ class HashTableIncrementTest(unittest.TestCase):
         self.assertEqual(ht['big number'], big_number + 1)
 
     def test_increment_by_long_long_max(self):
-        ht = HashTable(64)
+        ht = HashTable(buckets=64)
 
         ht.increment('max', long_long_max)
         self.assertEqual(ht['max'], long_long_max)
@@ -64,7 +64,7 @@ class HashTableIncrementTest(unittest.TestCase):
         """
         Negative test: increment fails on a number which is larger than long long's max
         """
-        ht = HashTable(64)
+        ht = HashTable(buckets=64)
 
         with self.assertRaises(OverflowError):
             ht.increment('toomuch', long_long_max + 1)
@@ -75,7 +75,7 @@ class HashTableIncrementTest(unittest.TestCase):
         """
         Negative test for overflowing on max counter value (long long max)
         """
-        ht = HashTable(64)
+        ht = HashTable(buckets=64)
         ht['max'] = long_long_max
         with self.assertRaises(OverflowError):
             ht.increment('max', 1)
@@ -89,7 +89,7 @@ class HashTableIncrementTest(unittest.TestCase):
         """
         Tests that increment by zero does not affect the counter
         """
-        ht = HashTable(64)
+        ht = HashTable(buckets=64)
         ht['bar'] = 2
 
         ht.increment('foo', 0)
@@ -99,7 +99,7 @@ class HashTableIncrementTest(unittest.TestCase):
         self.assertEqual(ht['bar'], 2)
 
     def test_increment_negative(self):
-        ht = HashTable(64)
+        ht = HashTable(buckets=64)
         ht.increment('foo', 3)
 
         # new value

@@ -18,7 +18,7 @@ class HashTableItemsTest(unittest.TestCase):
     """
 
     def setUp(self):
-        self.ht = HashTable(64)
+        self.ht = HashTable(buckets=64)
 
     def test_simple_length_test(self):
         self.assertEqual(len(self.ht), 0)
@@ -49,7 +49,7 @@ class HashTableItemsTest(unittest.TestCase):
         self.assertEqual(len(self.ht), 2)
 
     def test_delete_prune_length_iteration_test(self):
-        self.ht = HashTable(8)
+        self.ht = HashTable(buckets=8)
         self.ht.update("bbboss")
         self.assertEqual(len(self.ht), 3)
 

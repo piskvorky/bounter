@@ -18,7 +18,7 @@ class HashTableTotalTest(unittest.TestCase):
     """
 
     def setUp(self):
-        self.ht = HashTable(64)
+        self.ht = HashTable(buckets=64)
 
     def test_simple_total(self):
         self.assertEqual(self.ht.total(), 0)
@@ -48,7 +48,7 @@ class HashTableTotalTest(unittest.TestCase):
         self.assertEqual(self.ht.total(), 1)
 
     def test_prune_total(self):
-        self.ht = HashTable(4)
+        self.ht = HashTable(buckets=4)
         self.ht.update("223334444")
         self.assertEqual(self.ht.total(), 9)
         self.ht.update("1")

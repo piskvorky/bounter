@@ -18,7 +18,7 @@ class HashTableQualityTest(unittest.TestCase):
     """
 
     def test_quality_default(self):
-        ht = HashTable(1024)
+        ht = HashTable(buckets=1024)
         """
         Uses the default structure
         """

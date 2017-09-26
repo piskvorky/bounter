@@ -25,7 +25,7 @@ class HashTableGetSetTest(unittest.TestCase):
     """
 
     def setUp(self):
-        self.ht = HashTable(64)
+        self.ht = HashTable(buckets=64)
 
     def test_unknown_is_zero(self):
         self.assertEqual(self.ht['foo'], 0)

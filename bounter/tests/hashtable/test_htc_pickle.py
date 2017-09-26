@@ -22,7 +22,7 @@ class HashTablePickleTest(unittest.TestCase):
     """
 
     def setUp(self):
-        self.ht = HashTable(64)
+        self.ht = HashTable(buckets=64)
 
     def tearDown(self):
         if os.path.isfile(filename):
@@ -30,6 +30,7 @@ class HashTablePickleTest(unittest.TestCase):
 
     def check_hashtable(self, reloaded):
         self.assertEqual(len(reloaded), len(self.ht))
+        self.assertEqual(reloaded.buckets(), self.ht.buckets())
         self.assertEqual(reloaded.total(), self.ht.total())
         self.assertEqual(set(reloaded.items()), set(self.ht.items()))
         self.assertEqual(reloaded.quality(), self.ht.quality())

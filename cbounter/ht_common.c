@@ -90,13 +90,26 @@ HT_VARIANT(_new)(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 HT_VARIANT(_init)(HT_TYPE *self, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"buckets", NULL};
-    long long w;
+    static char *kwlist[] = {"size_mb", "buckets", NULL};
+    uint64_t size_mb = 0;
+    long long w = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "L", kwlist,
-				      &w)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|LL", kwlist,
+				      &size_mb, &w)) {
         return -1;
     }
+
+    if (!w && size_mb)
+    {
+        w = (size_mb << 19) / sizeof(HT_VARIANT(_cell_t));
+    }
+    if (!w)
+    {
+        char * msg = "You must specify a size in MB or the number of buckets!";
+        PyErr_SetString(PyExc_ValueError, msg);
+        return -1;
+    }
+
     if (w < 4)
     {
         char * msg = "The number of buckets must be at least 4!";
@@ -476,7 +489,8 @@ HT_VARIANT(_quality)(HT_TYPE *self)
 static PyObject *
 HT_VARIANT(_reduce)(HT_TYPE *self)
 {
-    PyObject *args = Py_BuildValue("(I)", self->buckets);
+    uint64_t size_mb = 2 * self->buckets * sizeof(HT_VARIANT(_cell_t));
+    PyObject *args = Py_BuildValue("(KI)", size_mb, self->buckets);
     HT_VARIANT(_cell_t) * table = self->table;
 
     PyObject * hashtable_row = PyByteArray_FromStringAndSize(table, self->buckets * sizeof(HT_VARIANT(_cell_t)));
