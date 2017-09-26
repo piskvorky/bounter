@@ -14,7 +14,7 @@ from bounter import HashTable
 
 class HashTableInitTest(unittest.TestCase):
     def test_none_init(self):
-        with self.assertRaises(ValueError,
+        with self.assertRaises(TypeError,
                                msg=("Constructor should throw ValueError for no parameters")):
             HashTable()
 
@@ -52,7 +52,7 @@ class HashTableInitTest(unittest.TestCase):
         """
         Negative test for initialization with too few buckets
         """
-        for invalid_bucket_count in [0.5, 1.0, "foo", dict()]:
+        for invalid_bucket_count in [0, 0.5, 1.0, "foo", dict()]:
             with self.assertRaises(TypeError, msg="Constructor should throw Type for non-numeric arguments"):
                 HashTable(buckets=invalid_bucket_count)
 
@@ -60,7 +60,7 @@ class HashTableInitTest(unittest.TestCase):
         """
         Negative test for initialization with too few buckets
         """
-        for invalid_bucket_count in [0, 1, 2, 3, -3, 2 ** 32]:
+        for invalid_bucket_count in [1, 2, 3, -3, 2 ** 32]:
             with self.assertRaises(ValueError,
                                    msg=("Constructor should throw ValueError for count %d" % invalid_bucket_count)):
                 HashTable(buckets=invalid_bucket_count)

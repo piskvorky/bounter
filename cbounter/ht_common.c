@@ -106,7 +106,7 @@ HT_VARIANT(_init)(HT_TYPE *self, PyObject *args, PyObject *kwds)
     if (!w)
     {
         char * msg = "You must specify a size in MB or the number of buckets!";
-        PyErr_SetString(PyExc_ValueError, msg);
+        PyErr_SetString(PyExc_TypeError, msg);
         return -1;
     }
 
