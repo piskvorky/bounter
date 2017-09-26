@@ -52,7 +52,7 @@ class HashTableInitTest(unittest.TestCase):
         """
         Negative test for initialization with too few buckets
         """
-        for invalid_bucket_count in [0, 0.5, 1.0, "foo", dict()]:
+        for invalid_bucket_count in ["foo", dict()]:
             with self.assertRaises(TypeError, msg="Constructor should throw Type for non-numeric arguments"):
                 HashTable(buckets=invalid_bucket_count)
 

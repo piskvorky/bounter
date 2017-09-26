@@ -117,13 +117,13 @@ class CountMinSketchStatisticalLog8Test(CountMinSketchStatisticalCommonTest):
     """
     Tests Log8
     Average deviation is within +/- 5%
-    Maximum deviation is within -58% and +135%
+    Maximum deviation is within -61% and +158%
     Total counter bias (bias of average value) is within +/-10%
     """
 
     def __init__(self, methodName='runTest'):
         super(CountMinSketchStatisticalLog8Test, self).__init__(methodName=methodName, algorithm='log8',
-                                                                avg_log_tolerance=0.05, max_log_tolerance=0.85,
+                                                                avg_log_tolerance=0.05, max_log_tolerance=0.95,
                                                                 total_bias_tolerance=0.1)
 
 
