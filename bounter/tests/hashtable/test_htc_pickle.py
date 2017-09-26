@@ -32,6 +32,8 @@ class HashTablePickleTest(unittest.TestCase):
         self.assertEqual(len(reloaded), len(self.ht))
         self.assertEqual(reloaded.total(), self.ht.total())
         self.assertEqual(set(reloaded.items()), set(self.ht.items()))
+        self.assertEqual(reloaded.quality(), self.ht.quality())
+        self.assertEqual(reloaded.cardinality(), self.ht.cardinality())
 
     def store_and_load(self):
         with open(filename, 'wb') as outfile:
@@ -61,6 +63,14 @@ class HashTablePickleTest(unittest.TestCase):
 
         reloaded = self.store_and_load()
         self.check_hashtable(reloaded)
+
+    def test_pickle_pruned(self):
+        for i in range(120):
+            self.ht.increment(str(i), 1 + ((i * 27) % 17))
+
+        reloaded = self.store_and_load()
+        self.check_hashtable(reloaded)
+
 
 
 if __name__ == '__main__':

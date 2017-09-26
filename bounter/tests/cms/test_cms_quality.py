@@ -18,7 +18,7 @@ class CountMinSketchQualityCommonTest(unittest.TestCase):
         super(CountMinSketchQualityCommonTest, self).__init__(methodName=methodName)
 
     """
-    Functional tests for HashTable.quality method, which returns quality rating of the structure
+    Functional tests for CountMinSketch.quality method, which returns quality rating of the structure
     """
 
     def setUp(self):
@@ -28,17 +28,17 @@ class CountMinSketchQualityCommonTest(unittest.TestCase):
         """
         Uses the default structure
         """
-        self.assertEquals(self.cms.quality(), 0)
+        self.assertEqual(self.cms.quality(), 0)
 
         three_quarters = int((self.cms.width * 3) / 4)
         for i in range(three_quarters):
-            self.cms.increment(str(i), i % 13)
+            self.cms.increment(str(i), 1 + (i % 13))
 
         self.assertGreaterEqual(self.cms.quality(), 0.5)
         self.assertLessEqual(self.cms.quality(), 1.0)
 
         for i in range(three_quarters * 7):
-            self.cms.increment(str(i), i % 13)
+            self.cms.increment(str(i), 1 + (i % 13))
 
         self.assertGreaterEqual(self.cms.quality(), 4.0)
         self.assertLessEqual(self.cms.quality(), 6.0)

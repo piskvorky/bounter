@@ -18,7 +18,7 @@ class CountMinSketchUpdateCommonTest(unittest.TestCase):
         super(CountMinSketchUpdateCommonTest, self).__init__(methodName=methodName)
 
     """
-    Functional tests for HashTable.update method, which adds another counter, dictionary, hashtable, tuple or list
+    Functional tests for CountMinSketch.update method, which adds another counter, dictionary, hashtable, tuple or list
     """
 
     def setUp(self):

@@ -29,6 +29,16 @@ class HashTableItemsTest(unittest.TestCase):
         self.ht.update("sad")
         self.assertEqual(len(self.ht), 5)
 
+    def test_simple_cardinality_test(self):
+        self.assertEqual(self.ht.cardinality(), 0)
+
+        self.ht.update("boss")
+        self.assertEqual(self.ht.cardinality(), 3)
+
+        self.ht.update("sad")
+        self.assertEqual(self.ht.cardinality(), 5)
+
+
     def test_delete_length_test(self):
         self.ht.update("boss")
         self.assertEqual(len(self.ht), 3)
@@ -56,6 +66,8 @@ class HashTableItemsTest(unittest.TestCase):
         self.assertEqual(len(self.ht), 4)
         # should iterate over 4 elements
         self.assertEqual(set(self.ht.items()), set({'b': 3, '!': 1, '2': 2, '3': 3}.items()))
+
+        self.assertEqual(self.ht.cardinality(), 7)
 
 
 if __name__ == '__main__':

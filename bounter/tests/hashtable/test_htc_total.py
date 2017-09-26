@@ -52,7 +52,7 @@ class HashTableTotalTest(unittest.TestCase):
         self.ht.update("223334444")
         self.assertEqual(self.ht.total(), 9)
         self.ht.update("1")
-        self.assertEqual(self.ht.total(), 8)
+        self.assertEqual(self.ht.total(), 10)
 
 
 if __name__ == '__main__':

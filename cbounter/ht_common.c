@@ -12,6 +12,7 @@
 #include <Python.h>
 #include "structmember.h"
 #include "murmur3.h"
+#include "hll.h"
 #include <string.h>
 #include <math.h>
 #include <stdint.h>
@@ -32,6 +33,8 @@ typedef struct {
     uint32_t size; // number of allocated buckets
     HT_VARIANT(_cell_t) * table;
     uint32_t * histo;
+    long long max_prune;
+    HyperLogLog hll;
 } HT_TYPE;
 
 #define ITER_RESULT_KEYS 1
@@ -66,6 +69,7 @@ HT_VARIANT(_dealloc)(HT_TYPE* self)
     // free the hashtable and histogram
     free(table);
     free(self->histo);
+    HyperLogLog_dealloc(&self->hll);
 
     // finally, destroy itself
     #if PY_MAJOR_VERSION >= 3
@@ -125,6 +129,9 @@ HT_VARIANT(_init)(HT_TYPE *self, PyObject *args, PyObject *kwds)
     self->histo = calloc(256, sizeof(uint32_t));
     self->total = 0;
     self->size = 0;
+    self->max_prune = 0;
+
+    HyperLogLog_init(&self->hll, 16);
 
     return 0;
 }
@@ -133,17 +140,19 @@ static PyMemberDef HT_VARIANT(_members[]) = {
     {NULL} /* Sentinel */
 };
 
-static inline uint32_t HT_VARIANT(_bucket)(HT_TYPE * self, char * data, uint32_t dataLength)
+static inline uint32_t HT_VARIANT(_bucket)(HT_TYPE * self, char * data, uint32_t dataLength, char store)
 {
     uint32_t bucket;
     MurmurHash3_x86_32((void *) data, dataLength, 42, (void *) &bucket);
+    if (store)
+        HyperLogLog_add(&self->hll, bucket);
     bucket &= self->hash_mask;
     return bucket;
 }
 
-static inline HT_VARIANT(_cell_t) * HT_VARIANT(_find_cell)(HT_TYPE * self, char * data, uint32_t dataLength)
+static inline HT_VARIANT(_cell_t) * HT_VARIANT(_find_cell)(HT_TYPE * self, char * data, uint32_t dataLength, char store)
 {
-    uint32_t bucket = HT_VARIANT(_bucket)(self, data, dataLength);
+    uint32_t bucket = HT_VARIANT(_bucket)(self, data, dataLength, store);
     const HT_VARIANT(_cell_t) * table = self->table;
 
     while (table[bucket].key && strcmp(table[bucket].key, data))
@@ -192,7 +201,7 @@ static long long HT_VARIANT(_prune_size)(HT_TYPE * self)
 
 static inline HT_VARIANT(_cell_t) * HT_VARIANT(_allocate_cell)(HT_TYPE * self, char * data, uint32_t dataLength)
 {
-    HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength);
+    HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength, 1);
 
     if (!cell->key)
     {
@@ -200,7 +209,7 @@ static inline HT_VARIANT(_cell_t) * HT_VARIANT(_allocate_cell)(HT_TYPE * self, c
         {
             HT_VARIANT(_prune_int)(self, HT_VARIANT(_prune_size)(self));
             // After pruning, we have to look for the ideal spot again, since a better slot might have opened
-            cell = HT_VARIANT(_find_cell)(self, data, dataLength);
+            cell = HT_VARIANT(_find_cell)(self, data, dataLength, 0);
         }
 
         self->size += 1;
@@ -221,6 +230,9 @@ static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary)
     uint32_t size = 0;
     uint32_t start = 0;
     uint32_t mask = self->hash_mask;
+
+    if (boundary > self->max_prune)
+        self->max_prune = boundary;
 
     uint32_t i;
     for (i = 0; i < 256; i++)
@@ -246,7 +258,7 @@ static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary)
 
             if (current_count > boundary)
             {
-                uint32_t replace = HT_VARIANT(_bucket)(self, current_key, data_length);
+                uint32_t replace = HT_VARIANT(_bucket)(self, current_key, data_length, 0);
 
                 if (((i - last_free) & mask) > ((i - replace) & mask))
                     replace = i;
@@ -268,7 +280,6 @@ static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary)
             }
             else
             {
-                self->total -= current_count;
                 self->str_allocated -= data_length + 1;
                 free(current_key);
                 table[i].key = NULL;
@@ -380,7 +391,7 @@ HT_VARIANT(_setitem)(HT_TYPE *self, PyObject *pKey, PyObject *pValue)
         // don't bother allocating a new cell when setting 0
         HT_VARIANT(_cell_t) * cell = value
                 ? HT_VARIANT(_allocate_cell)(self, data, dataLength)
-                : HT_VARIANT(_find_cell)(self, data, dataLength);
+                : HT_VARIANT(_find_cell)(self, data, dataLength, 0);
 
         if (cell)
         {
@@ -393,7 +404,7 @@ HT_VARIANT(_setitem)(HT_TYPE *self, PyObject *pKey, PyObject *pValue)
     }
     else // delete value
     {
-        HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength);
+        HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength, 0);
         if (cell)
         {
             self->histo[HT_VARIANT(_histo_addr)(cell->count)] -= 1;
@@ -419,7 +430,7 @@ HT_VARIANT(_getitem)(HT_TYPE *self, PyObject *key)
     if (!HT_VARIANT(_checkString)(data, dataLength))
         return NULL;
 
-    HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength);
+    HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength, 0);
     long long value = cell ? cell->count : 0;
 
     return Py_BuildValue("L", value);
@@ -435,6 +446,30 @@ static Py_ssize_t
 HT_VARIANT(_size)(HT_TYPE *self)
 {
     return self->size - self->histo[0];
+}
+
+static PyObject *
+HT_VARIANT(_cardinality)(HT_TYPE *self)
+{
+    if (!self->max_prune)
+        return Py_BuildValue("n", HT_VARIANT(_size)(self));
+
+    double cardinality = HyperLogLog_cardinality(&self->hll);
+    return Py_BuildValue("L", (long long) cardinality);
+}
+
+static PyObject *
+HT_VARIANT(_quality)(HT_TYPE *self)
+{
+    uint32_t limit = (self->buckets >> 2) * 3;
+
+    double size = (self->max_prune)
+            ? HyperLogLog_cardinality(&self->hll)
+            : (double) HT_VARIANT(_size)(self);
+
+    double quality = size / (double) limit;
+
+    return Py_BuildValue("d", quality);
 }
 
 /* Serialization function for pickling. */
@@ -462,7 +497,10 @@ HT_VARIANT(_reduce)(HT_TYPE *self)
         }
     }
 
-    PyObject *state = Py_BuildValue("(LLIOOO)", self->total, self->str_allocated, self->size, hashtable_row, strings_row, histo_row);
+    PyObject * hll_row = PyByteArray_FromStringAndSize(self->hll.registers, self->hll.size);
+
+    PyObject *state = Py_BuildValue("(LLILOOOO)",
+        self->total, self->str_allocated, self->size, self->max_prune, hashtable_row, strings_row, histo_row, hll_row);
     return Py_BuildValue("(OOO)", Py_TYPE(self), args, state);
 }
 
@@ -473,9 +511,11 @@ HT_VARIANT(_set_state)(HT_TYPE * self, PyObject * args)
     PyObject * hashtable_row_o;
     PyObject * strings_row_o;
     PyObject * histo_row_o;
+    PyObject * hll_row_o;
 
-    if (!PyArg_ParseTuple(args, "(LLIOOO)",
-            &self->total, &self->str_allocated, &self->size, &hashtable_row_o, &strings_row_o, &histo_row_o))
+    if (!PyArg_ParseTuple(args, "(LLILOOOO)",
+            &self->total, &self->str_allocated, &self->size, &self->max_prune,
+            &hashtable_row_o, &strings_row_o, &histo_row_o, &hll_row_o))
         return NULL;
 
     char * hashtable_row = PyByteArray_AsString(hashtable_row_o);
@@ -511,6 +551,11 @@ HT_VARIANT(_set_state)(HT_TYPE * self, PyObject * args)
     if (!histo_row)
         return NULL;
     memcpy(self->histo, histo_row, 256 * sizeof(uint32_t));
+
+    hll_cell_t * hll_row = PyByteArray_AsString(hll_row_o);
+    if (!hll_row)
+        return NULL;
+    memcpy(self->hll.registers, hll_row, self->hll.size);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -786,6 +831,9 @@ static PyMethodDef HT_VARIANT(_methods)[] = {
     {"increment", (PyCFunction)HT_VARIANT(_increment), METH_VARARGS,
      "Adds a string to the counter."
     },
+    {"cardinality", (PyCFunction)HT_VARIANT(_cardinality), METH_NOARGS,
+     "Returns an estimate for the number of distinct items inserted into the counter. Does not work correctly when values are deleted!"
+    },
     {"total", (PyCFunction)HT_VARIANT(_total), METH_NOARGS,
      "Returns sum of all counts in the counter."
     },
@@ -794,6 +842,9 @@ static PyMethodDef HT_VARIANT(_methods)[] = {
     },
     {"update", (PyCFunction)HT_VARIANT(_update), METH_VARARGS,
      "Adds all pairs from another counter, or adds all items from an iterable."
+    },
+    {"quality", (PyCFunction)HT_VARIANT(_quality), METH_NOARGS,
+     "Returns the current estimated overflow rating of the structure, calculated as (cardinality / available buckets)."
     },
     {"histo", (PyCFunction)HT_VARIANT(_print_histo), METH_NOARGS,
      "Iterates over all key-value pairs."
