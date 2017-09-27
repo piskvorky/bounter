@@ -9,6 +9,8 @@
 #define GLUE_I(x,y) GLUE(x, y)
 #define HT_VARIANT(suffix) GLUE_I(HT_TYPE, suffix)
 
+#define MAX_PICKLE_CHUNK_SIZE 0x01000000
+
 #include <Python.h>
 #include "structmember.h"
 #include "murmur3.h"
@@ -493,13 +495,34 @@ HT_VARIANT(_reduce)(HT_TYPE *self)
     PyObject *args = Py_BuildValue("(KI)", size_mb, self->buckets);
     HT_VARIANT(_cell_t) * table = self->table;
 
-    PyObject * hashtable_row = PyByteArray_FromStringAndSize(table, self->buckets * sizeof(HT_VARIANT(_cell_t)));
+    uint32_t chunk_size = (self->buckets <= MAX_PICKLE_CHUNK_SIZE) ? self->buckets : MAX_PICKLE_CHUNK_SIZE;
+    uint32_t chunks = self->buckets / chunk_size;
+    uint32_t current_chunk;
+    uint32_t i;
+
+    PyObject * hashtable_list = PyList_New(chunks);
+    for (current_chunk = 0; current_chunk < chunks; current_chunk++)
+    {
+        PyObject * hashtable_row = PyByteArray_FromStringAndSize(&table[current_chunk * chunk_size], chunk_size * sizeof(HT_VARIANT(_cell_t)));
+        if (!hashtable_row)
+            return NULL;
+        PyList_SetItem(hashtable_list, current_chunk, hashtable_row);
+
+        // set all keys to one
+        HT_VARIANT(_cell_t) * buffer = PyByteArray_AsString(hashtable_row);
+        for (i = 0; i < chunk_size; i++)
+        {
+            if (buffer[i].key)
+                buffer[i].key = 1;
+        }
+    }
+
     PyObject * histo_row = PyByteArray_FromStringAndSize(self->histo, 256 * sizeof(uint32_t));
 
     PyByteArrayObject * strings_row = (PyByteArrayObject *) PyByteArray_FromStringAndSize(NULL, self->str_allocated);
 
     char * result_index = strings_row->ob_bytes;
-    uint32_t i;
+
     for (i = 0; i < self->buckets; i++)
     {
         char* key = table[i].key;
@@ -514,7 +537,7 @@ HT_VARIANT(_reduce)(HT_TYPE *self)
     PyObject * hll_row = PyByteArray_FromStringAndSize(self->hll.registers, self->hll.size);
 
     PyObject *state = Py_BuildValue("(LLILOOOO)",
-        self->total, self->str_allocated, self->size, self->max_prune, hashtable_row, strings_row, histo_row, hll_row);
+        self->total, self->str_allocated, self->size, self->max_prune, hashtable_list, strings_row, histo_row, hll_row);
     return Py_BuildValue("(OOO)", Py_TYPE(self), args, state);
 }
 
@@ -522,23 +545,29 @@ HT_VARIANT(_reduce)(HT_TYPE *self)
 static PyObject *
 HT_VARIANT(_set_state)(HT_TYPE * self, PyObject * args)
 {
-    PyObject * hashtable_row_o;
+    PyObject * hashtable_list;
     PyObject * strings_row_o;
     PyObject * histo_row_o;
     PyObject * hll_row_o;
 
     if (!PyArg_ParseTuple(args, "(LLILOOOO)",
             &self->total, &self->str_allocated, &self->size, &self->max_prune,
-            &hashtable_row_o, &strings_row_o, &histo_row_o, &hll_row_o))
-        return NULL;
-
-    char * hashtable_row = PyByteArray_AsString(hashtable_row_o);
-    if (!hashtable_row)
+            &hashtable_list, &strings_row_o, &histo_row_o, &hll_row_o))
         return NULL;
 
     HT_VARIANT(_cell_t) * table = self->table;
 
-    memcpy(table, hashtable_row, self->buckets * sizeof(HT_VARIANT(_cell_t)));
+    uint32_t chunk_size = (self->buckets <= MAX_PICKLE_CHUNK_SIZE) ? self->buckets : MAX_PICKLE_CHUNK_SIZE;
+    uint32_t chunks = self->buckets / chunk_size;
+    uint32_t current_chunk;
+    for (current_chunk = 0; current_chunk < chunks; current_chunk++)
+    {
+        PyObject * hashtable_row_o = PyList_GetItem(hashtable_list, current_chunk);
+        char * hashtable_row = PyByteArray_AsString(hashtable_row_o);
+        if (!hashtable_row)
+            return NULL;
+        memcpy(&table[current_chunk * chunk_size], (HT_VARIANT(_cell_t) *) hashtable_row, chunk_size * sizeof(HT_VARIANT(_cell_t)));
+    }
 
     char * string_row = PyByteArray_AsString(strings_row_o);
     uint64_t total_length = PyByteArray_Size(strings_row_o);

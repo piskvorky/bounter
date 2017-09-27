@@ -72,6 +72,15 @@ class HashTablePickleTest(unittest.TestCase):
         reloaded = self.store_and_load()
         self.check_hashtable(reloaded)
 
+    def test_pickle_large(self):
+        self.ht = HashTable(buckets=2 ** 25)
+        self.ht.update("boss")
+        self.ht.update("pickling")
+        self.ht.update("verylargetable")
+
+        reloaded = self.store_and_load()
+        self.check_hashtable(reloaded)
+
 
 
 if __name__ == '__main__':
