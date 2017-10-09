@@ -63,8 +63,12 @@ class CountMinSketchStatisticalCommonTest(unittest.TestCase):
     Functional tests for setting and retrieving values of the counter
     """
 
-    def __init__(self, methodName='runTest', algorithm='conservative', avg_log_tolerance=0.0, max_log_tolerance=0.0,
-                 total_bias_tolerance=0.0):
+    def __init__(
+            self, methodName='runTest',
+            algorithm='conservative',
+            avg_log_tolerance=0.0,
+            max_log_tolerance=0.0,
+            total_bias_tolerance=0.0):
         self.algorithm = algorithm
         self.avg_log_tolerance = avg_log_tolerance
         self.max_log_tolerance = max_log_tolerance
@@ -84,11 +88,18 @@ class CountMinSketchStatisticalCommonTest(unittest.TestCase):
 
         bias, deviation, max_log_error, avg_log_error, max_d_error, max_error_expected = stats(cms, expected)
 
-        self.assertAlmostEqual(max_log_error, 0, msg="Each result should be within maximum tolerance",
-                               delta=self.max_log_tolerance)
-        self.assertAlmostEqual(avg_log_error, 0, msg="Average log deviation should be low",
-                               delta=self.avg_log_tolerance)
-        self.assertAlmostEqual(bias, 0, msg="Total bias should be low", delta=self.total_bias_tolerance)
+        self.assertAlmostEqual(
+            max_log_error, 0,
+            msg="Each result should be within maximum tolerance",
+            delta=self.max_log_tolerance)
+        self.assertAlmostEqual(
+            avg_log_error, 0,
+            msg="Average log deviation should be low",
+            delta=self.avg_log_tolerance)
+        self.assertAlmostEqual(
+            bias, 0,
+            msg="Total bias should be low",
+            delta=self.total_bias_tolerance)
 
 
 class CountMinSketchStatisticalConservativeTest(CountMinSketchStatisticalCommonTest):
@@ -105,9 +116,10 @@ class CountMinSketchStatisticalLog1024Test(CountMinSketchStatisticalCommonTest):
     """
 
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchStatisticalLog1024Test, self).__init__(methodName=methodName, algorithm='log1024',
-                                                                   avg_log_tolerance=0.001, max_log_tolerance=0.1,
-                                                                   total_bias_tolerance=0.005)
+        super(CountMinSketchStatisticalLog1024Test, self).__init__(
+            methodName=methodName, algorithm='log1024',
+            avg_log_tolerance=0.001, max_log_tolerance=0.1,
+            total_bias_tolerance=0.005)
 
 
 class CountMinSketchStatisticalLog8Test(CountMinSketchStatisticalCommonTest):
@@ -119,9 +131,10 @@ class CountMinSketchStatisticalLog8Test(CountMinSketchStatisticalCommonTest):
     """
 
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchStatisticalLog8Test, self).__init__(methodName=methodName, algorithm='log8',
-                                                                avg_log_tolerance=0.05, max_log_tolerance=0.95,
-                                                                total_bias_tolerance=0.1)
+        super(CountMinSketchStatisticalLog8Test, self).__init__(
+            methodName=methodName, algorithm='log8',
+            avg_log_tolerance=0.05, max_log_tolerance=0.95,
+            total_bias_tolerance=0.1)
 
 
 def load_tests(loader, tests, pattern):

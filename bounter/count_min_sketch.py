@@ -48,7 +48,7 @@ class CountMinSketch(object):
 
     def __init__(self, size_mb=64, width=None, depth=None, algorithm='conservative'):
         """
-        Initializes the Count-Min Sketch structure with the given parameters
+        Initialize the Count-Min Sketch structure with the given parameters
 
         Args:
             size_mb (int): controls the maximum size of the Count-min Sketch table.
@@ -119,7 +119,7 @@ class CountMinSketch(object):
     @staticmethod
     def table_size(width, depth=4, algorithm='conservative'):
         """
-        Returns size of Count-min Sketch table with provided parameters in bytes.
+        Return size of Count-min Sketch table with provided parameters in bytes.
         Does *not* include additional constant overhead used by parameter variables and HLL table, totalling less than 65KB.
         """
         return width * depth * CountMinSketch.cell_size(algorithm)
@@ -129,13 +129,13 @@ class CountMinSketch(object):
 
     def cardinality(self):
         """
-        Returns an estimate for the number of distinct keys counted by the structure. The estimate should be within 1%.
+        Return an estimate for the number of distinct keys counted by the structure. The estimate should be within 1%.
         """
         return self.cms.cardinality()
 
     def total(self):
         """
-        Returns a precise total sum of all increments performed on this counter.
+        Return a precise total sum of all increments performed on this counter.
 
         The counter keeps the total in a separate variable so the number is accurate in all circumstances (i.e. even
         with high number of collisions or when a log algorithm is used.
@@ -144,7 +144,7 @@ class CountMinSketch(object):
 
     def merge(self, other):
         """
-        Merges another Count-min sketch structure into this one. The other structure must be initialized
+        Merge another Count-min sketch structure into this one. The other structure must be initialized
         with the same width, depth and algorithm, and remains unaffected by this operation.
 
         Please note that merging two halves is always less accurate than counting the whole set with a single counter,
@@ -160,14 +160,14 @@ class CountMinSketch(object):
 
     def size(self):
         """
-        Returns current size of the Count-min Sketch table in bytes.
+        Return current size of the Count-min Sketch table in bytes.
         Does *not* include additional constant overhead used by parameter variables and HLL table, totalling less than 65KB.
         """
         return self.width * self.depth * self.cell_size_v
 
     def quality(self):
         """
-        Returns the current estimated overflow rating of the structure, calculated as cardinality / width.
+        Return the current estimated overflow rating of the structure, calculated as cardinality / width.
 
         For quality < 1, the table should return results without collision bias. For quality rating up to 5, collision
         bias is small. For a larger quality rating, the structure suffers from a considerable collision bias affecting
