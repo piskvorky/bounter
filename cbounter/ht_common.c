@@ -878,7 +878,7 @@ static PyMethodDef HT_VARIANT(_methods)[] = {
      "Returns an estimate for the number of distinct items inserted into the counter. Does not work correctly when values are deleted!"
     },
     {"total", (PyCFunction)HT_VARIANT(_total), METH_NOARGS,
-     "Returns sum of all counts in the counter."
+     "Returns a precise total sum of all increments performed on this counter. Does not work correcly with deleting values or setting them directly when pruning kicks in."
     },
     {"items", (PyCFunction)HT_VARIANT(_HT_iter_KV), METH_NOARGS,
      "Iterates over all key-value pairs."
@@ -889,7 +889,7 @@ static PyMethodDef HT_VARIANT(_methods)[] = {
     {"quality", (PyCFunction)HT_VARIANT(_quality), METH_NOARGS,
      "Returns the current estimated overflow rating of the structure, calculated as (cardinality / available buckets)."
     },
-    {"histo", (PyCFunction)HT_VARIANT(_print_histo), METH_NOARGS,
+    {"_histo", (PyCFunction)HT_VARIANT(_print_histo), METH_NOARGS,
      "Iterates over all key-value pairs."
     },
     {"prune", (PyCFunction)HT_VARIANT(_prune), METH_VARARGS,
@@ -898,7 +898,7 @@ static PyMethodDef HT_VARIANT(_methods)[] = {
     {"buckets", (PyCFunction)HT_VARIANT(_buckets), METH_NOARGS,
      "Returns the total number of buckets in the hashtable."
     },
-    {"mem", (PyCFunction)HT_VARIANT(_print_alloc), METH_NOARGS,
+    {"_mem", (PyCFunction)HT_VARIANT(_print_alloc), METH_NOARGS,
      "Returns allocated memory on the heap in bytes."
     },
     {"__reduce__", (PyCFunction)HT_VARIANT(_reduce), METH_NOARGS,
