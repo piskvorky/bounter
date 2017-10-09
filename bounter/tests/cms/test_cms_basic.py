@@ -129,15 +129,15 @@ class CountMinSketchSanityCommonTest(unittest.TestCase):
         self.assertEqual(self.cms[long_string], 2)
         self.assertEqual(self.cms[longer_string], 3)
 
-    def test_get_increment_unicode_string(self):
-        unicode_string = "Unicode dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☹ "
+    def test_get_increment_non_ascii_string(self):
+        non_ascii_string = "Non-ascii dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☹ "
         # the second line contains a different symbol
-        similar_string = "Unicode dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☺ "
+        similar_string = "Non-ascii dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☺ "
 
-        self.cms.increment(unicode_string, 2)
+        self.cms.increment(non_ascii_string, 2)
         self.cms.increment(similar_string, 3)
 
-        self.assertEqual(self.cms[unicode_string], 2)
+        self.assertEqual(self.cms[non_ascii_string], 2)
         self.assertEqual(self.cms[similar_string], 3)
 
     def test_increment_string_value(self):

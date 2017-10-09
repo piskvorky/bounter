@@ -148,19 +148,19 @@ class HashTableGetSetTest(unittest.TestCase):
         del self.ht[longer_string]
         self.assertEqual(self.ht[longer_string], 0)
 
-    def test_get_set_unicode_string(self):
-        unicode_string = "Unicode dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☹ "
+    def test_get_set_nonascii_string(self):
+        non_ascii_string = "Non-ascii dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☹ "
         # the second line contains a different symbol
-        similar_string = "Unicode dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☺ "
+        similar_string = "Non-ascii dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☺ "
 
-        self.ht[unicode_string] = 2
+        self.ht[non_ascii_string] = 2
         self.ht[similar_string] = 3
 
-        self.assertEqual(self.ht[unicode_string], 2)
+        self.assertEqual(self.ht[non_ascii_string], 2)
         self.assertEqual(self.ht[similar_string], 3)
 
-        del self.ht[unicode_string]
-        self.assertEqual(self.ht[unicode_string], 0)
+        del self.ht[non_ascii_string]
+        self.assertEqual(self.ht[non_ascii_string], 0)
 
     def test_set_float_value(self):
         """
