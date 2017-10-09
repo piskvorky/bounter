@@ -37,8 +37,8 @@ Parameters
     Significantly affects precision and memory footprint. For precise results, this should be no smaller than one
     order of magnitude away from the cardinality of the set.
     For significantly smaller widths, deterioration will occur.
-    For instance, to store all bigrams in English Wikipedia (1 857 420 106 bigrams, 179 413 989 unique),
-    good results can be achieved with a width of 67 108 864 (2^26) (37%).
+    For instance, to store all bigrams in English Wikipedia (1,857,420,106 bigrams, 179,413,989 unique),
+    good results can be achieved with a width of 67,108,864 (2^26) (37%).
 -   **Depth**: Number of rows, significant for the reliability of the result. Linearly affects speed of the
     algorithm as well as its memory footprint. For best results, use a small number such as 5.
     Using more than 8 is wasteful, better put that memory
@@ -64,7 +64,7 @@ Cell size is
 HLL size is 64 KB
 
 Example:
-    width 2^25 (33 554 432), depth 8, logcons1024 (2B) has 2^(25 + 3 + 1) + 64 KB = 536.9 MB
+    width 2^25 (33,554,432), depth 8, logcons1024 (2B) has 2^(25 + 3 + 1) + 64 KB = 536.9 MB
     Can be pickled to disk with this exact size.
 
 Performance
@@ -75,7 +75,7 @@ In each case, we have counted the entire data set into all bounter structures:
 
 ```python
     with smart_open('title_tokens.txt.gz') as wiki:
-        for lineno, line in enumerate(wiki):
+        for line in wiki:
             words = line.decode().split('\t')[1].split()
             counter.update(words)
 ```
@@ -85,7 +85,7 @@ count of these with the structures.
 All counters use the same validation set.
 
 #### Unigrams
-The Wikipedia data set contains 7661318 distinct words in 1860927726 total words. To store all of 
+The Wikipedia data set contains 7,661,318 distinct words in 1,860,927,726 total words. To store all of 
 these counts efficiently (but without compression), we would need approximately 160 MB (~ 22B per word).
 
 ##### Timings
@@ -104,9 +104,9 @@ Python Counter (dict) uses approximately 800 MB to store this set in RAM.
 ![Precision on unigrams data](docs/bounter_unigrams_wiki.png)
 
 #### Bigrams
-The Wikipedia data set contains 179413989 distinct bigrams in 1857420106 total bigrams.
+The Wikipedia data set contains 179,413,989 distinct bigrams in 1,857,420,106 total bigrams.
 To store all of these counts efficiently (but without compression), we would need approximately 160 MB (~ 30B per word).
-To store all of these counts properly, we would need approximately 5133 MB (without compression).
+To store all of these counts properly, we would need approximately 5,133 MB (without compression).
 
 Storing them all in a single Python counter would require approximately 17.2 GB RAM. 
 
