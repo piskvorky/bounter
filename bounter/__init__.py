@@ -10,4 +10,3 @@
 __version__ = '0.2.0'
 
 from .count_min_sketch import CountMinSketch
-from htc import HT_Basic as HashTable

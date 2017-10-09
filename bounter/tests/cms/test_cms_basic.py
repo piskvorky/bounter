@@ -100,8 +100,6 @@ class CountMinSketchSanityCommonTest(unittest.TestCase):
         """
         with self.assertRaises(TypeError):
             self.cms.increment(1)
-            # with self.assertRaises(TypeError):
-            #     foo = self.cms[1]
 
     def test_get_increment_object_key(self):
         """
@@ -111,8 +109,6 @@ class CountMinSketchSanityCommonTest(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.cms.increment(o)
-            # with self.assertRaises(TypeError):
-            #     foo = self.cms[o]
 
     def test_get_increment_empty_string(self):
         self.cms.increment('foo', 42)
@@ -125,8 +121,8 @@ class CountMinSketchSanityCommonTest(unittest.TestCase):
         self.assertEqual(self.cms[''], 4)
 
     def test_get_increment_long_string(self):
-        long_string = 'loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong'
-        longer_string = 'loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong'
+        long_string = 'l' + ('o' * 100) + 'ng'
+        longer_string = 'l' + ('o' * 120) + 'ng'
         self.cms.increment(long_string, 2)
         self.cms.increment(longer_string, 3)
 

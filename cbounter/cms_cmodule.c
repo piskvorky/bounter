@@ -26,7 +26,7 @@ static inline uint32_t rand_32b()
 #if PY_MAJOR_VERSION >= 3
 static PyModuleDef CMSC_module = {
     PyModuleDef_HEAD_INIT,
-    "cmsc",
+    "bounter-cmsc",
     "C implementation of Count-Min Sketch.",
     -1,
     NULL, NULL, NULL, NULL, NULL
@@ -40,12 +40,12 @@ static PyMethodDef module_methods[] = {
 
 #if PY_MAJOR_VERSION >=3
 PyMODINIT_FUNC
-PyInit_cmsc(void)
+PyInit_bounter_cmsc(void)
 #else
     #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
         #define PyMODINIT_FUNC void
     #endif
-PyMODINIT_FUNC initcmsc(void)
+PyMODINIT_FUNC initbounter_cmsc(void)
 #endif
 {
     PyObject* m;
@@ -63,7 +63,7 @@ PyMODINIT_FUNC initcmsc(void)
     }
 
     char *description = "C implementation of CMS";
-    m = Py_InitModule3("cmsc", module_methods, description);
+    m = Py_InitModule3("bounter_cmsc", module_methods, description);
     #endif
 
     if (m == NULL)

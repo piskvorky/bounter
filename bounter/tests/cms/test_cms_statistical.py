@@ -82,10 +82,7 @@ class CountMinSketchStatisticalCommonTest(unittest.TestCase):
         expected = Counter()
         expected.update(generateData(cardinality))
 
-        (bias, deviation, max_log_error, avg_log_error, max_d_error, max_error_expected) = stats(cms, expected)
-
-        # print("Total bias: %.5f\nStd. deviation: %f\nMax log error %.3f (abs %d) when expected %d corresponding to estimate being a multiple of %.4f \nAvg log error %.6f"
-        #       % (bias, deviation, max_log_error, max_d_error, max_error_expected, math.e ** max_log_error, avg_log_error))
+        bias, deviation, max_log_error, avg_log_error, max_d_error, max_error_expected = stats(cms, expected)
 
         self.assertAlmostEqual(max_log_error, 0, msg="Each result should be within maximum tolerance",
                                delta=self.max_log_tolerance)

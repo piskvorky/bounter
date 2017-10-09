@@ -7,24 +7,24 @@
 # This code is distributed under the terms and conditions
 # from the MIT License (MIT).
 
-import cmsc
+import bounter_cmsc as cmsc
 
 
 class CountMinSketch(object):
     """
     Data structure used to estimate frequencies of elements in massive data sets with fixed memory footprint.
     Example::
-        cms = CountMinSketch(size_mb=512) # Use 512 MB
-        print(cms.width)  # 16 777 216
-        print(cms.depth)   # 8
-        print(cms.size)  # 536 870 912 (512 MB in bytes)
-        cms.increment("foo")
-        cms.increment("bar")
-        cms.increment("foo")
-        print(cms["foo"]) # 2
-        print(cms["bar"]) # 1
-        print(cms.cardinality()) # 2
-        print(cms.total()) # 3
+        >>> cms = CountMinSketch(size_mb=512)  # Use 512 MB
+        >>> print(cms.width)  # 16 777 216
+        >>> print(cms.depth)  # 8
+        >>> print(cms.size)  # 536 870 912 (512 MB in bytes)
+        >>> cms.increment("foo")
+        >>> cms.increment("bar")
+        >>> cms.increment("foo")
+        >>> print(cms["foo"])  # 2
+        >>> print(cms["bar"])  # 1
+        >>> print(cms.cardinality())  # 2
+        >>> print(cms.total())  # 3
     To calculate memory footprint:
         ( width * depth * cell_size ) + HLL size
         Cell size is
@@ -32,12 +32,12 @@ class CountMinSketch(object):
            - 2B for log1024
            - 1B for log8
         HLL size is 64 KB
-    Memory example:
+    Memory usage example:
         width 2^25 (33 554 432), depth 8, log1024 (2B) has 2^(25 + 3 + 1) + 64 KB = 512.06 MB
         Can be pickled to disk with this exact size
     How to choose parameters and algorithm:
-        Preferably, start with high a high `size_mb` using the 'conservative' algorithm. After counting all elements of the
-        set, check `cms.cardinality()` and calculate quality ratio `cms.cardinality / cms.width`.
+        Preferably, start with a high `size_mb` using the 'conservative' algorithm. After counting all elements of the
+        set, check `cms.cardinality()` and check quality ratio with `quality()`.
         If this ratio is greater than 1, the table is likely to suffer small bias from collisions. As the ratio climbs over 5,
         the results are getting more and more biased. Therefore we recommend choosing a higher size (if possible) or
         switching to 'log1024' algorithm which can support twice the width with the same memory size (or 'log8' for quadruple).
@@ -56,7 +56,7 @@ class CountMinSketch(object):
                 Please note that the structure will use an overhead of approximately 65 KB in addition to the table size.
             depth (int): controls the number of rows of the table. Having more rows decreases probability of a big
                 overestimation but also linearly affects performance and table size. Choose a small number such as 6-10.
-                The algorithm will default depth 8 if width is provided. Otherwise, it will choose a depth in range 5-8
+                The algorithm will default depth 8 if width is provided. Otherwise, it will choose a depth in range 8-15
                 to best fill the maximum memory (for memory size which is a power of 2, depth of 8 is always used).
             width (int): controls the number of hash buckets in one row of the table.
                 If width is not provided, the algorithm chooses the maximum width to fill the available size.
@@ -75,7 +75,7 @@ class CountMinSketch(object):
             raise ValueError("size_mb must be an integer!")
 
         if width is None and depth is None:
-            self.width = 1 << (size_mb * (2 ** 16) // cell_size).bit_length()
+            self.width = 1 << (size_mb * (2 ** 20) // (cell_size * 8 * 2)).bit_length()
             self.depth = (size_mb * (2 ** 20)) // (self.width * cell_size)
         elif width is None:
             self.depth = depth
@@ -124,9 +124,6 @@ class CountMinSketch(object):
         """
         return width * depth * CountMinSketch.cell_size(algorithm)
 
-    def increment(self, key):
-        self.cms.increment(key)
-
     def __getitem__(self, key):
         return self.cms.get(key)
 
@@ -137,6 +134,12 @@ class CountMinSketch(object):
         return self.cms.cardinality()
 
     def total(self):
+        """
+        Returns a precise total sum of all increments performed on this counter.
+
+        The counter keeps the total in a separate variable so the number is accurate in all circumstances (i.e. even
+        with high number of collisions or when a log algorithm is used.
+        """
         return self.cms.total()
 
     def merge(self, other):

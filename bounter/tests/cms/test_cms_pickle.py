@@ -68,6 +68,26 @@ class CountMinSketchPickleCommonTest(unittest.TestCase):
         reloaded = self.store_and_load()
         self.check_cms(reloaded, expected)
 
+    def test_pickle_increment_after_reload(self):
+        expected = Counter()
+        for structure in [self.cms, expected]:
+            structure.update("pickling")
+        self.cms.increment('1')
+        self.cms.increment('2', 2)
+        expected['1'] += 1
+        expected['2'] += 2
+
+        self.check_cms(self.cms, expected)
+
+        reloaded = self.store_and_load()
+
+        for structure in [reloaded, expected]:
+            structure.update("pickling")
+        reloaded.increment('1', 1)
+        reloaded.increment('3', 3)
+        expected['1'] += 1
+        expected['3'] += 3
+        self.check_cms(reloaded, expected)
 
 class CountMinSketchPickleConservativeTest(CountMinSketchPickleCommonTest):
     def __init__(self, methodName='runTest'):

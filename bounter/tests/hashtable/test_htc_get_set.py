@@ -85,7 +85,7 @@ class HashTableGetSetTest(unittest.TestCase):
         """
 
         self.ht['foo'] = 1
-        # SLOW, always prefer to use ht.increment('foo', 1) or ht.increment('foo') instead!
+        # SLOW, always prefer to use ht.increment('foo', 2) or ht.increment('foo') instead!
         self.ht['foo'] += 2
         self.assertEqual(self.ht['foo'], 3)
 
@@ -137,8 +137,8 @@ class HashTableGetSetTest(unittest.TestCase):
         self.assertEqual(self.ht[''], 0)
 
     def test_get_set_long_string(self):
-        long_string = 'loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong'
-        longer_string = 'loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong'
+        long_string = 'l' + ('o' * 100) + 'ng'
+        longer_string = 'l' + ('o' * 120) + 'ng'
         self.ht[long_string] = 2
         self.ht[longer_string] = 3
 
@@ -173,7 +173,6 @@ class HashTableGetSetTest(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.ht['foo'] = float(42.0)
-
 
     def test_set_string_value(self):
         """

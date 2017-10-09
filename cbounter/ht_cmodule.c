@@ -12,7 +12,7 @@
 #if PY_MAJOR_VERSION >= 3
 static PyModuleDef htc_module = {
     PyModuleDef_HEAD_INIT,
-    "htc",
+    "bounter_htc",
     "C implementation of a hashtable for counting short strings.",
     -1,
     NULL, NULL, NULL, NULL, NULL
@@ -26,12 +26,12 @@ static PyMethodDef module_methods[] = {
 
 #if PY_MAJOR_VERSION >=3
 PyMODINIT_FUNC
-PyInit_htc(void)
+PyInit_bounter_htc(void)
 #else
     #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
         #define PyMODINIT_FUNC void
     #endif
-PyMODINIT_FUNC inithtc(void)
+PyMODINIT_FUNC initbounter_htc(void)
 #endif
 {
     PyObject* m;
@@ -47,7 +47,7 @@ PyMODINIT_FUNC inithtc(void)
     }
 
     char *description = "C implementation of a hashtable for counting short strings";
-    m = Py_InitModule3("htc", module_methods, description);
+    m = Py_InitModule3("bounter_htc", module_methods, description);
     #endif
 
     if (m == NULL)
