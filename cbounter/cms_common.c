@@ -151,18 +151,69 @@ CMS_VARIANT(_increment_obj)(CMS_TYPE *self, char *data, uint32_t dataLength, lon
     return Py_None;
 }
 
+static char *
+CMS_VARIANT(_parse_key)(PyObject * key, uint32_t * dataLength, PyObject ** free_after)
+{
+    char * data = NULL;
+    #if PY_MAJOR_VERSION >= 3
+    if (PyUnicode_Check(key)) {
+        data = PyUnicode_AsUTF8AndSize(key, dataLength);
+    }
+    #else
+    if (PyUnicode_Check(key))
+    {
+        key = PyUnicode_AsUTF8String(key);
+        *free_after = key;
+    }
+    if (PyString_Check(key)) {
+        if (PyString_AsStringAndSize(key, &data, dataLength))
+            data = NULL;
+    }
+    #endif
+    else { /* read-only bytes-like object */
+        PyBufferProcs *pb = Py_TYPE(key)->tp_as_buffer;
+        Py_buffer view;
+        char release_failure = -1;
+
+        if ((pb == NULL || pb->bf_releasebuffer == NULL)
+               && ((release_failure = PyObject_GetBuffer(key, &view, PyBUF_SIMPLE)) == 0)
+               && PyBuffer_IsContiguous(&view, 'C'))
+        {
+            data = view.buf;
+            *dataLength = view.len;
+        }
+        if (!release_failure)
+            PyBuffer_Release(&view);
+    }
+    if (!data)
+    {
+        char * msg = "The parameter must be a unicode object or bytes buffer!";
+        PyErr_SetString(PyExc_TypeError, msg);
+        Py_XDECREF(*free_after);
+        *free_after = NULL;
+        return NULL;
+    }
+    return data;
+}
+
 /* Adds an element to the frequency estimator. */
 static PyObject *
 CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
 {
-    const char *data;
-    const uint32_t dataLength;
+    PyObject * pkey;
+    PyObject * free_after = NULL;
+    uint32_t dataLength = 0;
     long long increment = 1;
 
-    if (!PyArg_ParseTuple(args, "s#|L", &data, &dataLength, &increment))
+    if (!PyArg_ParseTuple(args, "O|L", &pkey, &increment))
+        return NULL;
+    char * data = CMS_VARIANT(_parse_key)(pkey, &dataLength, &free_after);
+    if (!data)
         return NULL;
 
-    return CMS_VARIANT(_increment_obj)(self, data, dataLength, increment);
+    PyObject * result = CMS_VARIANT(_increment_obj)(self, data, dataLength, increment);
+    Py_XDECREF(free_after);
+    return result;
 }
 
 static inline long long CMS_VARIANT(decode)(CMS_CELL_TYPE value);
@@ -171,10 +222,14 @@ static inline long long CMS_VARIANT(decode)(CMS_CELL_TYPE value);
 static PyObject *
 CMS_VARIANT(_getitem)(CMS_TYPE *self, PyObject *args)
 {
-    const char *data;
-    const uint32_t dataLength;
+    PyObject * pkey;
+    PyObject * free_after = NULL;
+    uint32_t dataLength = 0;
 
-    if (!PyArg_ParseTuple(args, "s#", &data, &dataLength))
+    if (!PyArg_ParseTuple(args, "O", &pkey))
+        return NULL;
+    char * data = CMS_VARIANT(_parse_key)(pkey, &dataLength, &free_after);
+    if (!data)
         return NULL;
 
     uint32_t hash;
@@ -189,6 +244,7 @@ CMS_VARIANT(_getitem)(CMS_TYPE *self, PyObject *args)
             min_value = value;
     }
 
+    Py_XDECREF(free_after);
     return Py_BuildValue("i", CMS_VARIANT(decode) (min_value));
 }
 
@@ -279,50 +335,26 @@ CMS_VARIANT(_update)(CMS_TYPE * self, PyObject *args)
                 {
                     Py_DECREF(item);
                     Py_DECREF(iterator);
-                    if (should_dealloc)
-                        Py_DECREF(should_dealloc);
+                    Py_XDECREF(should_dealloc);
                     return NULL;
                 }
             }
             else
             {
-                data = NULL;
-                #if PY_MAJOR_VERSION >= 3
-                if (PyUnicode_Check(item)) {
-                    data = PyUnicode_AsUTF8AndSize(item, &dataLength);
-                }
-                #else
-                if (PyString_Check(item)) {
-                    if (PyString_AsStringAndSize(item, &data, &dataLength))
-                        data = NULL;
-                }
-                #endif
-                else { /* read-only bytes-like object */
-                    PyBufferProcs *pb = Py_TYPE(item)->tp_as_buffer;
-                    Py_buffer view;
-                    char release_failure = -1;
-
-                    if ((pb == NULL || pb->bf_releasebuffer == NULL)
-                           && ((release_failure = PyObject_GetBuffer(item, &view, PyBUF_SIMPLE)) == 0)
-                           && PyBuffer_IsContiguous(&view, 'C'))
-                    {
-                        data = view.buf;
-                        dataLength = view.len;
-                    }
-                    if (!release_failure)
-                        PyBuffer_Release(&view);
-                }
+                PyObject * free_after = NULL;
+                data = CMS_VARIANT(_parse_key)(item, &dataLength, &free_after);
                 if (!data
                     || !CMS_VARIANT(_increment_obj)(self, data, dataLength, 1))
                 {
                     Py_DECREF(item);
+                    Py_XDECREF(free_after);
                     Py_DECREF(iterator);
-                    if (should_dealloc)
-                        Py_DECREF(should_dealloc);
+                    Py_XDECREF(should_dealloc);
                     return NULL;
                 }
-                Py_DECREF(item);
+                Py_XDECREF(free_after);
             }
+            Py_DECREF(item);
         }
         Py_DECREF(iterator);
     }

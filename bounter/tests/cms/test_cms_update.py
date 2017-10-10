@@ -52,6 +52,12 @@ class CountMinSketchUpdateCommonTest(unittest.TestCase):
         self.assertEqual(self.cms[b'foo'], 2)
         self.assertEqual(self.cms['bar'], 1)
 
+    def test_update_unicode(self):
+        tuple = ('foo', 'bar', u'foo')
+        self.cms.update(tuple)
+        self.assertEqual(self.cms['foo'], 2)
+        self.assertEqual(self.cms[u'foo'], 2)
+
     def test_update_list(self):
         self.cms.update([str(i % 3) for i in range(5)])
         self.assertEqual(self.cms['0'], 2)

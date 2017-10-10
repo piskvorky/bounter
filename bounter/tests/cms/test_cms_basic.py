@@ -140,6 +140,17 @@ class CountMinSketchSanityCommonTest(unittest.TestCase):
         self.assertEqual(self.cms[non_ascii_string], 2)
         self.assertEqual(self.cms[similar_string], 3)
 
+    def test_get_increment_non_ascii_unicode(self):
+        non_ascii_unicode = u"Non-ascii dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☹ "
+        # the second line contains a different symbol
+        similar_unicode = u"Non-ascii dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☺ "
+
+        self.cms.increment(non_ascii_unicode, 2)
+        self.cms.increment(similar_unicode, 3)
+
+        self.assertEqual(self.cms[non_ascii_unicode], 2)
+        self.assertEqual(self.cms[similar_unicode], 3)
+
     def test_increment_string_value(self):
         """
         Negative test: string values are not supported and yield TypeError

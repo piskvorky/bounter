@@ -162,6 +162,20 @@ class HashTableGetSetTest(unittest.TestCase):
         del self.ht[non_ascii_string]
         self.assertEqual(self.ht[non_ascii_string], 0)
 
+    def test_get_set_nonascii_unicode(self):
+        non_ascii_unicode = u"Non-ascii dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☹ "
+        # the second line contains a different symbol
+        similar_unicode = u"Non-ascii dôverivá Čučoriedka 9#8\\%7 平仮名\n☃\t+☀\t=\t☺ "
+
+        self.ht[non_ascii_unicode] = 2
+        self.ht[similar_unicode] = 3
+
+        self.assertEqual(self.ht[non_ascii_unicode], 2)
+        self.assertEqual(self.ht[similar_unicode], 3)
+
+        del self.ht[non_ascii_unicode]
+        self.assertEqual(self.ht[non_ascii_unicode], 0)
+
     def test_set_float_value(self):
         """
         Negative test: float values are not supported and yield TypeError

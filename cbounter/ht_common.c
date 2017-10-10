@@ -37,6 +37,7 @@ typedef struct {
     uint32_t * histo;
     long long max_prune;
     HyperLogLog hll;
+    char use_unicode;
 } HT_TYPE;
 
 #define ITER_RESULT_KEYS 1
@@ -47,6 +48,7 @@ typedef struct {
   PyObject_HEAD
   HT_TYPE * hashtable;
   uint32_t i;
+  char use_unicode;
   char result_type;
 } HT_VARIANT(_ITER_TYPE);
 
@@ -92,12 +94,13 @@ HT_VARIANT(_new)(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 HT_VARIANT(_init)(HT_TYPE *self, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"size_mb", "buckets", NULL};
+    static char *kwlist[] = {"size_mb", "buckets", "use_unicode", NULL};
     uint64_t size_mb = 0;
     long long w = 0;
+    int use_unicode = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|LL", kwlist,
-				      &size_mb, &w)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|LLi", kwlist,
+				      &size_mb, &w, &use_unicode)) {
         return -1;
     }
 
@@ -132,6 +135,8 @@ HT_VARIANT(_init)(HT_TYPE *self, PyObject *args, PyObject *kwds)
         hash_length = 0;
     self->buckets = 1 << hash_length;
     self->hash_mask = self->buckets - 1;
+
+    self->use_unicode = use_unicode;
 
     self->table = (HT_VARIANT(_cell_t) *) calloc(self->buckets, sizeof(HT_VARIANT(_cell_t)));
     if (!self->table)
@@ -313,17 +318,6 @@ static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary)
 
 }
 
-static inline int HT_VARIANT(_checkString)(char * value, uint32_t length)
-{
-    if (!value || strlen(value) < length)
-    {
-        char * msg = "String contains null bytes!";
-        PyErr_SetString(PyExc_ValueError, msg);
-        return 0;
-    }
-    return 1;
-}
-
 /* Adds a string to the counter. */
 static PyObject *
 HT_VARIANT(_increment_obj)(HT_TYPE *self, char *data, uint32_t dataLength, long long increment)
@@ -362,44 +356,105 @@ HT_VARIANT(_increment_obj)(HT_TYPE *self, char *data, uint32_t dataLength, long 
     return NULL;
 }
 
+
+static char *
+HT_VARIANT(_parse_key)(PyObject * key, uint32_t * dataLength, PyObject ** free_after)
+{
+    char * data = NULL;
+    #if PY_MAJOR_VERSION >= 3
+    if (PyUnicode_Check(key)) {
+        data = PyUnicode_AsUTF8AndSize(key, dataLength);
+    }
+    #else
+    if (PyUnicode_Check(key))
+    {
+        key = PyUnicode_AsUTF8String(key);
+        *free_after = key;
+    }
+    if (PyString_Check(key)) {
+        if (PyString_AsStringAndSize(key, &data, dataLength))
+            data = NULL;
+    }
+    #endif
+    else { /* read-only bytes-like object */
+        PyBufferProcs *pb = Py_TYPE(key)->tp_as_buffer;
+        Py_buffer view;
+        char release_failure = -1;
+
+        if ((pb == NULL || pb->bf_releasebuffer == NULL)
+               && ((release_failure = PyObject_GetBuffer(key, &view, PyBUF_SIMPLE)) == 0)
+               && PyBuffer_IsContiguous(&view, 'C'))
+        {
+            data = view.buf;
+            *dataLength = view.len;
+        }
+        if (!release_failure)
+            PyBuffer_Release(&view);
+    }
+    if (!data)
+    {
+        char * msg = "The parameter must be a unicode object or bytes buffer!";
+        PyErr_SetString(PyExc_TypeError, msg);
+        Py_XDECREF(*free_after);
+        *free_after = NULL;
+        return NULL;
+    }
+    if (strlen(data) < *dataLength)
+    {
+        char * msg = "The key must not contain null bytes!";
+        PyErr_SetString(PyExc_ValueError, msg);
+        Py_XDECREF(*free_after);
+        *free_after = NULL;
+        return NULL;
+    }
+    return data;
+}
+
 /* Adds a string to the counter. */
 static PyObject *
 HT_VARIANT(_increment)(HT_TYPE *self, PyObject *args)
 {
-    const char *data;
-    const uint32_t dataLength;
+    PyObject * pkey;
+    PyObject * free_after = NULL;
+    uint32_t dataLength = 0;
 
     long long increment = 1;
 
-    if (!PyArg_ParseTuple(args, "s#|L", &data, &dataLength, &increment))
+    if (!PyArg_ParseTuple(args, "O|L", &pkey, &increment))
         return NULL;
-    if (!HT_VARIANT(_checkString)(data, dataLength))
+    char * data = HT_VARIANT(_parse_key)(pkey, &dataLength, &free_after);
+    if (!data)
         return NULL;
 
-    return HT_VARIANT(_increment_obj)(self, data, dataLength, increment);
+     PyObject * result = HT_VARIANT(_increment_obj)(self, data, dataLength, increment);
+     Py_XDECREF(free_after);
+     return result;
 }
 
 /* Sets count for a single string. */
 static int
 HT_VARIANT(_setitem)(HT_TYPE *self, PyObject *pKey, PyObject *pValue)
 {
-    const char *data;
-    const uint32_t dataLength;
+    PyObject * free_after = NULL;
+    uint32_t dataLength = 0;
     long long value;
 
-    if (!PyArg_Parse(pKey, "s#", &data, &dataLength))
-        return -1;
-    if (!HT_VARIANT(_checkString)(data, dataLength))
+    char * data = HT_VARIANT(_parse_key)(pKey, &dataLength, &free_after);
+    if (!data)
         return -1;
 
     if (pValue) // set value
     {
         if (!PyArg_Parse(pValue, "L", &value))
+        {
+            Py_XDECREF(free_after);
             return -1;
+        }
         if (value < 0)
         {
             char * msg = "The counter only supports positive values!";
             PyErr_SetString(PyExc_ValueError, msg);
+            Py_XDECREF(free_after);
             return -1;
         }
 
@@ -414,6 +469,7 @@ HT_VARIANT(_setitem)(HT_TYPE *self, PyObject *pKey, PyObject *pValue)
             self->histo[HT_VARIANT(_histo_addr)(value)] += 1;
             self->total += value - cell->count;
             cell->count = value;
+            Py_XDECREF(free_after);
             return 0;
         }
     }
@@ -427,9 +483,11 @@ HT_VARIANT(_setitem)(HT_TYPE *self, PyObject *pKey, PyObject *pValue)
             self->total -= cell->count;
             cell->count = 0;
         }
+        Py_XDECREF(free_after);
         return 0;
     }
 
+    Py_XDECREF(free_after);
     return -1;
 }
 
@@ -437,17 +495,17 @@ HT_VARIANT(_setitem)(HT_TYPE *self, PyObject *pKey, PyObject *pValue)
 static PyObject *
 HT_VARIANT(_getitem)(HT_TYPE *self, PyObject *key)
 {
-    const char *data;
-    const uint32_t dataLength;
+    PyObject * free_after = NULL;
+    uint32_t dataLength = 0;
 
-    if (!PyArg_Parse(key, "s#", &data, &dataLength))
-        return NULL;
-    if (!HT_VARIANT(_checkString)(data, dataLength))
+    char * data = HT_VARIANT(_parse_key)(key, &dataLength, &free_after);
+    if (!data)
         return NULL;
 
     HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength, 0);
-    long long value = cell ? cell->count : 0;
+    Py_XDECREF(free_after);
 
+    long long value = cell ? cell->count : 0;
     return Py_BuildValue("L", value);
 }
 
@@ -685,44 +743,21 @@ HT_VARIANT(_update)(HT_TYPE * self, PyObject *args)
             }
             else
             {
-                data = NULL;
-                #if PY_MAJOR_VERSION >= 3
-                if (PyUnicode_Check(item)) {
-                    data = PyUnicode_AsUTF8AndSize(item, &dataLength);
-                }
-                #else
-                if (PyString_Check(item)) {
-                    if (PyString_AsStringAndSize(item, &data, &dataLength))
-                        data = NULL;
-                }
-                #endif
-                else { /* read-only bytes-like object */
-                    PyBufferProcs *pb = Py_TYPE(item)->tp_as_buffer;
-                    Py_buffer view;
-                    char release_failure = -1;
-
-                    if ((pb == NULL || pb->bf_releasebuffer == NULL)
-                           && ((release_failure = PyObject_GetBuffer(item, &view, PyBUF_SIMPLE)) == 0)
-                           && PyBuffer_IsContiguous(&view, 'C'))
-                    {
-                        data = view.buf;
-                        dataLength = view.len;
-                    }
-                    if (!release_failure)
-                        PyBuffer_Release(&view);
-                }
+                PyObject * free_after = NULL;
+                data = HT_VARIANT(_parse_key)(item, &dataLength, &free_after);
                 if (!data
-                    || !HT_VARIANT(_checkString)(data, dataLength)
                     || !HT_VARIANT(_increment_obj)(self, data, dataLength, 1))
                 {
                     Py_DECREF(item);
+                    Py_XDECREF(free_after);
                     Py_DECREF(iterator);
                     if (should_dealloc)
                         Py_DECREF(should_dealloc);
                     return NULL;
                 }
-                Py_DECREF(item);
+                Py_XDECREF(free_after);
             }
+            Py_DECREF(item);
         }
         Py_DECREF(iterator);
     }
@@ -763,10 +798,20 @@ PyObject* HT_VARIANT(_ITER_iternext)(HT_VARIANT(_ITER_TYPE) *self)
     if (i < buckets)
     {
         PyObject * result;
+        char * current_key = table[i].key;
+        PyObject * pkey;
+        pkey = (self->use_unicode)
+            ? PyUnicode_DecodeUTF8(current_key, strlen(current_key), NULL)
+            #if PY_MAJOR_VERSION >= 3
+            : PyBytes_FromStringAndSize(current_key, strlen(current_key));
+            #else
+            : PyString_FromStringAndSize(current_key, strlen(current_key));
+            #endif
+
         if (self->result_type == ITER_RESULT_KEYS)
-            result = Py_BuildValue("s", table[i].key);
+            result = pkey;
         else if (self->result_type == ITER_RESULT_KV_PAIRS)
-            result = Py_BuildValue("(sl)", table[i].key, table[i].count);
+            result = PyTuple_Pack(2, pkey, Py_BuildValue("L", table[i].count));
         else
         {
             char * msg = "Invalid iteration type!";
@@ -853,6 +898,7 @@ HT_VARIANT(_make_iterator)(HT_TYPE *self, char result_type)
     iterator->i = 0;
     iterator->hashtable = self;
     iterator->result_type = result_type;
+    iterator->use_unicode = self->use_unicode;
     Py_INCREF(self);
     return iterator;
 }
