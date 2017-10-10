@@ -8,9 +8,11 @@
 # from the MIT License (MIT).
 
 import unittest
+import sys
 
 from bounter import HashTable
 
+uni_type = str if sys.version_info >= (3, 0) else unicode
 
 class HashTableIterTypeTest(unittest.TestCase):
     """
@@ -23,19 +25,19 @@ class HashTableIterTypeTest(unittest.TestCase):
     def test_itertype_default_unicode(self):
         self.ht.update([b'bytes', u'Unicode', 'String'])
         for key in self.ht:
-            self.assertEqual(type(key), unicode)
+            self.assertEqual(type(key), uni_type)
 
         for key, _ in self.ht.items():
-            self.assertEqual(type(key), unicode)
+            self.assertEqual(type(key), uni_type)
 
     def test_itertype_use_unicode_true(self):
         self.ht = HashTable(buckets=64, use_unicode=True)
         self.ht.update([b'bytes', u'Unicode', 'String'])
         for key in self.ht:
-            self.assertEqual(type(key), unicode)
+            self.assertEqual(type(key), uni_type)
 
         for key, _ in self.ht.items():
-            self.assertEqual(type(key), unicode)
+            self.assertEqual(type(key), uni_type)
 
     def test_itertype_use_unicode_false(self):
         self.ht = HashTable(buckets=64, use_unicode=False)
