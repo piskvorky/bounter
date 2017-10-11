@@ -21,7 +21,7 @@ class CountMinSketchSanityCommonTest(unittest.TestCase):
     Functional tests for setting and retrieving values of the counter
     """
 
-    def __init__(self, methodName='runTest', algorithm='conservative', delta=0):
+    def __init__(self, methodName='runTest', algorithm='conservative', delta=0.0):
         self.algorithm = algorithm
         self.delta = delta
         super(CountMinSketchSanityCommonTest, self).__init__(methodName=methodName)
@@ -215,7 +215,7 @@ class CountMinSketchSanityLog1024Test(CountMinSketchSanityCommonTest):
 
 class CountMinSketchSanityLog8Test(CountMinSketchSanityCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchSanityLog8Test, self).__init__(methodName=methodName, algorithm='log8', delta=0.7)
+        super(CountMinSketchSanityLog8Test, self).__init__(methodName=methodName, algorithm='log8', delta=0.8)
 
 
 def load_tests(loader, tests, pattern):
