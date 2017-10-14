@@ -7,32 +7,24 @@
 # This code is distributed under the terms and conditions
 # from the MIT License (MIT).
 
-
-import io
-import os
 import sys
 
 if sys.version_info < (2, 7):
     raise ImportError("bounter requires python >= 2.7")
 
 # TODO add ez_setup?
-from setuptools import setup, find_packages
-
-
-def read(fname):
-    return io.open(os.path.join(os.path.dirname(__file__), fname), encoding='utf-8').read()
-
-
-def extract_requirements():
-    return read('requirements.txt').splitlines()
-
+from setuptools import setup, find_packages, Extension
 
 setup(
     name='bounter',
-    version='0.1.1',
+    version='0.2.0',
     description='Counting frequencies in large data sets with constrained memory',
-    long_description=read('README.md'),
 
+    headers=['cbounter/hll.h', 'cbounter/murmur3.h'],
+    ext_modules=[
+        Extension('bounter_cmsc', ['cbounter/cms_cmodule.c', 'cbounter/murmur3.c', 'cbounter/hll.c']),
+        Extension('bounter_htc', ['cbounter/ht_cmodule.c', 'cbounter/murmur3.c', 'cbounter/hll.c'])
+    ],
     packages=find_packages(),
 
     author=u'Filip Stefanak',
@@ -48,8 +40,6 @@ setup(
     license='MIT',
     platforms='any',
     test_suite="bounter.tests",
-
-    install_requires=extract_requirements(),
 
     classifiers=[  # from http://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Development Status :: 2 - Pre-Alpha',
