@@ -29,8 +29,8 @@ setup(
 
     author=u'Filip Stefanak',
     author_email='f.stefanak@rare-technologies.com',
-    maintainer=u'Filip Stefanak',
-    maintainer_email='f.stefanak@rare-technologies.com',
+    maintainer=u'RARE Technologies',
+    maintainer_email='opensource@rare-technologies.com',
 
     url='https://github.com/RaRe-Technologies/bounter',
     download_url='http://pypi.python.org/pypi/bounter',

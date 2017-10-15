@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/RaRe-Technologies/bounter.svg?branch=master)](https://travis-ci.org/RaRe-Technologies/bounter)[![GitHub release](https://img.shields.io/github/release/rare-technologies/bounter.svg?maxAge=2592000)](https://pypi.python.org/pypi/bounter)[![Mailing List](https://img.shields.io/badge/-Mailing%20List-lightgrey.svg)](https://groups.google.com/forum/#!forum/gensim)[![Gitter](https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-09a3d5.svg)](https://gitter.im/RaRe-Technologies/gensim)[![Follow](https://img.shields.io/twitter/follow/spacy_io.svg?style=social&label=Follow)](https://twitter.com/gensim_py)
 
-Bounter is a Python library, written in C, for extremely fast counting of item frequencies in massive datasets, using only a small fixed memory footprint.
+Bounter is a Python library, written in C, for extremely fast probabilistic counting of item frequencies in massive datasets, using only a small fixed memory footprint.
 
 ## Why Bounter?
 
@@ -18,7 +18,7 @@ print(counts[u'few'])  # query the counts
 2
 ```
 
-However, unlike `dict` or `Counter`, Bounter can process huge collections where the items would not even fit in RAM. This commonly happens in Machine Learning and NLP, with tasks like **dictionary building** or **collocation detection** that need to count billions of items (token ngrams) for their statistical scoring and subsequent filtering.
+However, unlike `dict` or `Counter`, Bounter can process huge collections where the items would not even fit in RAM. This commonly happens in Machine Learning and NLP, with tasks like **dictionary building** or **collocation detection** that need to estimate counts of billions of items (token ngrams) for their statistical scoring and subsequent filtering.
 
 Bounter implements approximative algorithms using optimized low-level C structures, to avoid the overhead of Python objects. It lets you specify the maximum amount of RAM you want to use. In the Wikipedia example below, Bounter uses FIXMEx less memory compared to `Counter`.
 
@@ -70,11 +70,11 @@ In particular, Bounter implements three different algorithms under the hood, dep
   counts.update(['a', 'b', 'c', 'a', 'b'])
   print(len(counts))  # total cardinality still works
 
-  print(counts['a'])  # but also supports asking for counts of individual items
+  print(counts['a'])  # supports asking for counts of individual items
   2
   ```
 
-  This uses the [Count-min Sketch algorithm](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) to estimate item counts efficiently, in a **fixed amount of memory**.
+  This uses the [Count-min Sketch algorithm](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) to estimate item counts efficiently, in a **fixed amount of memory**. See the [FIXME API docs](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py) for full details and parameters.
 
 3. **Full item iteration: "What are the items and their frequencies?"**
 
@@ -90,7 +90,7 @@ In particular, Bounter implements three different algorithms under the hood, dep
   ['a', 'b', 'c']
   ```
 
-  Also stores the keys (strings) themselves in addition to the total cardinality and individual item frequency. Uses the most memory, but supports the most functionality.
+  Also stores the keys (strings) themselves in addition to the total cardinality and individual item frequency. Uses the most memory, but supports the widest range of functionality.
 
   This option uses a custom C hash table underneath, with optimized string storage. It will remove its low-count objects when nearing the maximum alotted memory, instead of expanding the table.
 
