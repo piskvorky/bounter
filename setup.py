@@ -18,7 +18,7 @@ from setuptools import setup, find_packages, Extension
 setup(
     name='bounter',
     version='0.2.0',
-    description='Counting frequencies in large data sets with constrained memory',
+    description='Counter for large datasets in bounded memory',
 
     headers=['cbounter/hll.h', 'cbounter/murmur3.h'],
     ext_modules=[
@@ -35,14 +35,14 @@ setup(
     url='https://github.com/RaRe-Technologies/bounter',
     download_url='http://pypi.python.org/pypi/bounter',
 
-    keywords='counter, count-min sketch, bounded memory',
+    keywords='counter, count-min sketch, bounded memory, hyperloglog, approximative counting',
 
     license='MIT',
     platforms='any',
     test_suite="bounter.tests",
 
     classifiers=[  # from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
