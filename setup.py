@@ -35,7 +35,7 @@ setup(
     url='https://github.com/RaRe-Technologies/bounter',
     download_url='http://pypi.python.org/pypi/bounter',
 
-    keywords='counter, count-min sketch, bounded memory, hyperloglog, approximative counting',
+    keywords='counter, count-min sketch, bounded memory, hyperloglog, approximative counting, cardinality estimation',
 
     license='MIT',
     platforms='any',
