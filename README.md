@@ -50,7 +50,7 @@ In particular, Bounter implements three different algorithms under the hood, dep
   ```python
   from bounter import bounter
 
-  counts = bounter(need_iteration=False)
+  counts = bounter(need_counts=False)
   counts.update(['a', 'b', 'c', 'a', 'b'])
 
   print(counts.cardinality())  # cardinality estimation
@@ -58,9 +58,7 @@ In particular, Bounter implements three different algorithms under the hood, dep
   print(counts.total())  # counts accumulated across all items
   5
   ```
-
-  FIXME We do not support HLL *only* at the moment! Could be "emulated" with HashTable with minimum number of buckets.
-  
+    
   This is the simplest use case and needs the least amount of memory, by using the [HyperLogLog algorithm](http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) (built on top of Joshua Andersen's [HLL](https://github.com/ascv/HyperLogLog) code).
 
 2. **Item frequencies: "How many times did this item appear?"**
@@ -76,7 +74,7 @@ In particular, Bounter implements three different algorithms under the hood, dep
   2
   ```
 
-  This uses the [Count-min Sketch algorithm](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) to estimate item counts efficiently, in a **fixed amount of memory**. See the [FIXME API docs](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py) for full details and parameters.
+  This uses the [Count-min Sketch algorithm](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) to estimate item counts efficiently, in a **fixed amount of memory**. See the [API docs](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py) for full details and parameters.
   
 As a further optimization, Count-min Sketch optionally support a [logarithmic probabilistic counter](https://en.wikipedia.org/wiki/Approximate_counting_algorithm):
 
@@ -108,7 +106,7 @@ Such memory vs. accuracy tradeoffs are sometimes desirable in NLP, where being a
 
 ----
 
-For more details, see the [FIXME API docstrings](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py).
+For more details, see the [API docstrings](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py).
 
 ## Example on the English Wikipedia
 
@@ -125,7 +123,7 @@ print(counter[u'czech republic'])
 42099
 ```
 
-The Wikipedia dataset contained 7,661,318 distinct words across 1,860,927,726 total words, and 179,413,989 distinct bigrams across 1,857,420,106 total bigrams. Storing them in a naive built-in `dict` would consume more than 17.2 GB RAM (FIXME suspiciously low number -- is this true?).
+The Wikipedia dataset contained 7,661,318 distinct words across 1,860,927,726 total words, and 179,413,989 distinct bigrams across 1,857,420,106 total bigrams. Storing them in a naive built-in `dict` would consume over 31 GB RAM.
 
 To test the accuracy of Bounter, we automatically extracted [collocations](https://en.wikipedia.org/wiki/Collocation) (common multi-word expressions, such as "New York", "network license", "Supreme Court" or "elementary school") from these bigram counts.
 
@@ -133,7 +131,7 @@ We compared the set of collocations extracted from Counter (exact counts, needs 
 
 | Algorithm                         | Time to build | Memory  | Precision | Recall | F1 score
 |-----------------------------------|--------------:|--------:|----------:|-------:|---------:|
-| `Counter` (built-in)              |         FIXME | 17.2 GB |      100% |   100% |     100% |
+| `Counter` (built-in)              |     FIXME 32m  | 31 GB |      100% |   100% |     100% |
 | `bounter(size_mb=128, need_iteration=False, log_counting=8)` |         18m 08s |   128 MB | 95.02% | 97.10% | 96.04% |
 | `bounter(size_mb=1024)`           |       13m 26s |    1 GB |     100% |  99.27% |   99.64% |
 | `bounter(size_mb=1024, need_iteration=False)` |     18m 38s |   1 GB |    0.9964% | 100% | 99.82% |
@@ -143,9 +141,9 @@ We compared the set of collocations extracted from Counter (exact counts, needs 
 | `bounter(size_mb=4096, need_iteration=False)` |        21m 02s  |   4 GB|    100% | 100% | 100% |
 | `bounter(size_mb=4096, need_iteration=False, log_counting=1024)` |        21m 34s |   4 GB |    100% | 99.64% | 99.82% |
 
-Bounter achieves 100% F1 score at 17x less memory, compared to a built-in `Counter` or `dict`. It is also FIXME % faster.
+Bounter achieves 100% F1 score at 31x less memory, compared to a built-in `Counter` or `dict`. It is also FIXME % faster.
 
-Even with just 128 MB (137x less memory), its F1 score is still 96.04! 
+Even with just 128 MB (250x less memory), its F1 score is still 96.04! 
 
 # Support
 
