@@ -13,8 +13,8 @@ from bounter import CountMinSketch
 
 
 class CountMinSketchQualityCommonTest(unittest.TestCase):
-    def __init__(self, methodName='runTest', algorithm='conservative'):
-        self.algorithm = algorithm
+    def __init__(self, methodName='runTest', log_counting=None):
+        self.log_counting = log_counting
         super(CountMinSketchQualityCommonTest, self).__init__(methodName=methodName)
 
     """
@@ -22,7 +22,7 @@ class CountMinSketchQualityCommonTest(unittest.TestCase):
     """
 
     def setUp(self):
-        self.cms = CountMinSketch(1, algorithm=self.algorithm)
+        self.cms = CountMinSketch(1, log_counting=self.log_counting)
 
     def test_quality_default(self):
         """
@@ -46,17 +46,17 @@ class CountMinSketchQualityCommonTest(unittest.TestCase):
 
 class CountMinSketchQualityConservativeTest(CountMinSketchQualityCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchQualityConservativeTest, self).__init__(methodName=methodName, algorithm='conservative')
+        super(CountMinSketchQualityConservativeTest, self).__init__(methodName=methodName, log_counting=None)
 
 
 class CountMinSketchQualityLog1024Test(CountMinSketchQualityCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchQualityLog1024Test, self).__init__(methodName=methodName, algorithm='log1024')
+        super(CountMinSketchQualityLog1024Test, self).__init__(methodName=methodName, log_counting=1024)
 
 
 class CountMinSketchQualityLog8Test(CountMinSketchQualityCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchQualityLog8Test, self).__init__(methodName=methodName, algorithm='log8')
+        super(CountMinSketchQualityLog8Test, self).__init__(methodName=methodName, log_counting=8)
 
 
 def load_tests(loader, tests, pattern):

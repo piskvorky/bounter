@@ -65,11 +65,11 @@ class CountMinSketchStatisticalCommonTest(unittest.TestCase):
 
     def __init__(
             self, methodName='runTest',
-            algorithm='conservative',
+            log_counting=None,
             avg_log_tolerance=0.0,
             max_log_tolerance=0.0,
             total_bias_tolerance=0.0):
-        self.algorithm = algorithm
+        self.log_counting = log_counting
         self.avg_log_tolerance = avg_log_tolerance
         self.max_log_tolerance = max_log_tolerance
         self.total_bias_tolerance = total_bias_tolerance
@@ -81,7 +81,7 @@ class CountMinSketchStatisticalCommonTest(unittest.TestCase):
         """
         width = 2 ** 17
         cardinality = width // 4
-        cms = CountMinSketch(width=width, depth=8, algorithm=self.algorithm)
+        cms = CountMinSketch(width=width, depth=8, log_counting=self.log_counting)
         cms.update(generateData(cardinality))
         expected = Counter()
         expected.update(generateData(cardinality))
@@ -104,7 +104,7 @@ class CountMinSketchStatisticalCommonTest(unittest.TestCase):
 
 class CountMinSketchStatisticalConservativeTest(CountMinSketchStatisticalCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchStatisticalConservativeTest, self).__init__(methodName=methodName, algorithm='conservative')
+        super(CountMinSketchStatisticalConservativeTest, self).__init__(methodName=methodName)
 
 
 class CountMinSketchStatisticalLog1024Test(CountMinSketchStatisticalCommonTest):
@@ -117,7 +117,7 @@ class CountMinSketchStatisticalLog1024Test(CountMinSketchStatisticalCommonTest):
 
     def __init__(self, methodName='runTest'):
         super(CountMinSketchStatisticalLog1024Test, self).__init__(
-            methodName=methodName, algorithm='log1024',
+            methodName=methodName, log_counting=1024,
             avg_log_tolerance=0.001, max_log_tolerance=0.1,
             total_bias_tolerance=0.005)
 
@@ -132,7 +132,7 @@ class CountMinSketchStatisticalLog8Test(CountMinSketchStatisticalCommonTest):
 
     def __init__(self, methodName='runTest'):
         super(CountMinSketchStatisticalLog8Test, self).__init__(
-            methodName=methodName, algorithm='log8',
+            methodName=methodName, log_counting=8,
             avg_log_tolerance=0.05, max_log_tolerance=0.95,
             total_bias_tolerance=0.1)
 

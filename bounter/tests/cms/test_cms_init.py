@@ -13,7 +13,7 @@ from bounter import CountMinSketch
 
 
 class CountMinSketchInitTest(unittest.TestCase):
-    def size_check(self, algorithm=None, width_adjustment=1):
+    def size_check(self, log_counting=None, width_adjustment=1):
         data_set = [
             (1, 2 ** 15, 8),
             (2, 2 ** 16, 8),
@@ -30,65 +30,65 @@ class CountMinSketchInitTest(unittest.TestCase):
         ]
 
         for (size_mb, width, depth) in data_set:
-            cms = CountMinSketch(size_mb, algorithm=algorithm)
+            cms = CountMinSketch(size_mb, log_counting=log_counting)
             self.assertEqual(cms.width, width * width_adjustment, "Width for size %d" % size_mb)
             self.assertEqual(cms.depth, depth, "Depth for size %d" % size_mb)
             self.assertLessEqual(cms.size(), size_mb * 1024 * 1024)
             self.assertGreater(cms.size(), size_mb * 1024 * 1024 / 2)
 
-    def test_sizemb_conservative_init(self):
-        self.size_check(algorithm='conservative', width_adjustment=1)
+    def test_sizemb_none_init(self):
+        self.size_check(log_counting=None, width_adjustment=1)
 
     def test_sizemb_log1024_init(self):
-        self.size_check(algorithm='log1024', width_adjustment=2)
+        self.size_check(log_counting=1024, width_adjustment=2)
 
     def test_sizemb_log8_init(self):
-        self.size_check(algorithm='log8', width_adjustment=4)
+        self.size_check(log_counting=8, width_adjustment=4)
 
     def test_width_depth_alg_init(self):
         data_set = [
-            ('conservative', 2 ** 12, 3, 49152),
-            ('conservative', 2 ** 13, 7, 229376),
-            ('log1024', 2 ** 18, 1, 524288),
-            ('log8', 2 ** 13, 7, 57344)
+            (None, 2 ** 12, 3, 49152),
+            (None, 2 ** 13, 7, 229376),
+            (1024, 2 ** 18, 1, 524288),
+            (8, 2 ** 13, 7, 57344)
         ]
-        for (algorithm, width, depth, size) in data_set:
-            cms = CountMinSketch(width=width, depth=depth, algorithm=algorithm)
+        for (log_counting, width, depth, size) in data_set:
+            cms = CountMinSketch(width=width, depth=depth, log_counting=log_counting)
             self.assertEqual(cms.width, width)
             self.assertEqual(cms.depth, depth)
             self.assertLessEqual(cms.size(), size)
 
     def test_width_alg_init(self):
         data_set = [
-            ('conservative', 4, 2 ** 18, 4),
-            ('conservative', 17, 2 ** 19, 8),
-            ('log1024', 70, 2 ** 21, 17),
-            ('log8', 100, 2 ** 26, 1)
+            (None, 4, 2 ** 18, 4),
+            (None, 17, 2 ** 19, 8),
+            (1024, 70, 2 ** 21, 17),
+            (8, 100, 2 ** 26, 1)
         ]
-        for (algorithm, size_mb, width, exp_depth) in data_set:
-            cms = CountMinSketch(size_mb=size_mb, width=width, algorithm=algorithm)
+        for (log_counting, size_mb, width, exp_depth) in data_set:
+            cms = CountMinSketch(size_mb=size_mb, width=width, log_counting=log_counting)
             self.assertEqual(cms.width, width)
             self.assertEqual(cms.depth, exp_depth)
             self.assertLessEqual(cms.size(), size_mb * 1024 * 1024)
 
     def test_depth_alg_init(self):
         data_set = [
-            ('conservative', 4, 2 ** 18, 4),
-            ('conservative', 17, 2 ** 19, 8),
-            ('log1024', 70, 2 ** 21, 17),
-            ('log8', 100, 2 ** 26, 1)
+            (None, 4, 2 ** 18, 4),
+            (None, 17, 2 ** 19, 8),
+            (1024, 70, 2 ** 21, 17),
+            (8, 100, 2 ** 26, 1)
         ]
-        for (algorithm, size_mb, exp_width, depth) in data_set:
-            cms = CountMinSketch(size_mb=size_mb, depth=depth, algorithm=algorithm)
+        for (log_counting, size_mb, exp_width, depth) in data_set:
+            cms = CountMinSketch(size_mb=size_mb, depth=depth, log_counting=log_counting)
             self.assertEqual(cms.width, exp_width)
             self.assertEqual(cms.depth, depth)
             self.assertLessEqual(cms.size(), size_mb * 1024 * 1024)
 
     def test_invalid_algorithm(self):
-        data = ['basic', 'cons', 'logcounter', None, 5]
+        data = ['basic', 'log8', 'cons', 'logcounter', 5]
         for bad_algorithm in data:
             with self.assertRaises(ValueError):
-                CountMinSketch(1, algorithm=bad_algorithm)
+                CountMinSketch(1, log_counting=bad_algorithm)
 
     def test_invalid_sizemb(self):
         with self.assertRaises(ValueError):

@@ -28,25 +28,26 @@ class CountMinSketch(object):
     To calculate memory footprint:
         ( width * depth * cell_size ) + HLL size
         Cell size is
-           - 4B for conservative and basic algorithm
-           - 2B for log1024
-           - 1B for log8
+           - 4B for default counting
+           - 2B for log1024 counting
+           - 1B for log8 counting
         HLL size is 64 KB
     Memory usage example:
         width 2^25 (33 554 432), depth 8, log1024 (2B) has 2^(25 + 3 + 1) + 64 KB = 512.06 MB
         Can be pickled to disk with this exact size
-    How to choose parameters and algorithm:
-        Preferably, start with a high `size_mb` using the 'conservative' algorithm. After counting all elements of the
+    How to choose parameters:
+        Preferably, start with a high `size_mb` using default counting. After counting all elements of the
         set, check `cms.cardinality()` and check quality ratio with `quality()`.
         If this ratio is greater than 1, the table is likely to suffer small bias from collisions. As the ratio climbs over 5,
         the results are getting more and more biased. Therefore we recommend choosing a higher size (if possible) or
-        switching to 'log1024' algorithm which can support twice the width with the same memory size (or 'log8' for quadruple).
-        Both of these algorithms suffer from a different kind of bias but that tends to be less severe than the collision bias.
-        If you can achieve the quality ratio below 1 with the 'conservative' algorithm, we do not recommend using the log
-        version as the collision bias will already be minimal.
+        switching to log1024 counting which can support twice the width with the same memory size (or log8 for quadruple).
+        Both of these counters suffer from a different kind of bias but that tends to be less severe than the collision
+        bias with a high quality ratio.
+        If you can achieve the quality ratio below 1 with the default counting, we do not recommend using the log
+        counting as the collision bias will already be minimal.
     """
 
-    def __init__(self, size_mb=64, width=None, depth=None, algorithm='conservative'):
+    def __init__(self, size_mb=64, width=None, depth=None, log_counting=None):
         """
         Initialize the Count-Min Sketch structure with the given parameters
 
@@ -62,13 +63,13 @@ class CountMinSketch(object):
                 If width is not provided, the algorithm chooses the maximum width to fill the available size.
                 The more, the better, should be very large, preferably in the same order of magnitude as the cardinality
                 of the counted set.
-            algorithm (str): controls the algorithm used for counting
-                - 'conservative' (default)
-                - 'log1024'
-                - 'log8'
+            log_counting (int): Use logarithmic counter value for reduced bucket size:
+                - None (default): 4B, no counter error
+                - 1024: 2B, counter error ~2% for values larger than 1024
+                - 8: 1B, counter error ~30% for values larger than 8
         """
 
-        cell_size = CountMinSketch.cell_size(algorithm);
+        cell_size = CountMinSketch.cell_size(log_counting)
         self.cell_size_v = cell_size
 
         if not isinstance(size_mb, int):
@@ -96,33 +97,33 @@ class CountMinSketch(object):
             self.width = width
             self.depth = depth
 
-        if algorithm and str(algorithm).lower() == 'log8':
+        if log_counting == 8:
             self.cms = cmsc.CMS_Log8(width=self.width, depth=self.depth)
-        elif algorithm and str(algorithm).lower() == 'log1024':
+        elif log_counting == 1024:
             self.cms = cmsc.CMS_Log1024(width=self.width, depth=self.depth)
-        elif algorithm and str(algorithm).lower() == 'conservative':
+        elif log_counting is None:
             self.cms = cmsc.CMS_Conservative(width=self.width, depth=self.depth)
         else:
-            raise ValueError("Unsupported algorithm! Use 'conservative', 'log8', or 'log1024'!");
+            raise ValueError("Unsupported counting parameter! Use None, 8, or 1024!")
 
         # optimize calls by directly binding to C implementation
         self.increment = self.cms.increment
 
     @staticmethod
-    def cell_size(algorithm='conservative'):
-        if str(algorithm).lower() == 'log8':
+    def cell_size(log_counting=None):
+        if log_counting == 8:
             return 1
-        if str(algorithm).lower() == 'log1024':
+        if log_counting == 1024:
             return 2
         return 4
 
     @staticmethod
-    def table_size(width, depth=4, algorithm='conservative'):
+    def table_size(width, depth=4, log_counting=None):
         """
         Return size of Count-min Sketch table with provided parameters in bytes.
         Does *not* include additional constant overhead used by parameter variables and HLL table, totalling less than 65KB.
         """
-        return width * depth * CountMinSketch.cell_size(algorithm)
+        return width * depth * CountMinSketch.cell_size(log_counting)
 
     def __getitem__(self, key):
         return self.cms.get(key)
