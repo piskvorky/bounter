@@ -9,6 +9,7 @@
 #define GLUE_I(x,y) GLUE(x, y)
 #define CMS_VARIANT(suffix) GLUE_I(CMS_TYPE, suffix)
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "structmember.h"
 #include "murmur3.h"
@@ -97,7 +98,7 @@ static PyMemberDef CMS_VARIANT(_members[]) = {
 static inline int CMS_VARIANT(should_inc)(CMS_CELL_TYPE value);
 
 static inline PyObject *
-CMS_VARIANT(_increment_obj)(CMS_TYPE *self, char *data, uint32_t dataLength, long long increment)
+CMS_VARIANT(_increment_obj)(CMS_TYPE *self, char *data, Py_ssize_t dataLength, long long increment)
 {
     uint32_t buckets[32];
     CMS_CELL_TYPE values[32];
@@ -152,7 +153,7 @@ CMS_VARIANT(_increment_obj)(CMS_TYPE *self, char *data, uint32_t dataLength, lon
 }
 
 static char *
-CMS_VARIANT(_parse_key)(PyObject * key, uint32_t * dataLength, PyObject ** free_after)
+CMS_VARIANT(_parse_key)(PyObject * key, Py_ssize_t * dataLength, PyObject ** free_after)
 {
     char * data = NULL;
     #if PY_MAJOR_VERSION >= 3
@@ -202,7 +203,7 @@ CMS_VARIANT(_increment)(CMS_TYPE *self, PyObject *args)
 {
     PyObject * pkey;
     PyObject * free_after = NULL;
-    uint32_t dataLength = 0;
+    Py_ssize_t dataLength = 0;
     long long increment = 1;
 
     if (!PyArg_ParseTuple(args, "O|L", &pkey, &increment))
@@ -224,7 +225,7 @@ CMS_VARIANT(_getitem)(CMS_TYPE *self, PyObject *args)
 {
     PyObject * pkey;
     PyObject * free_after = NULL;
-    uint32_t dataLength = 0;
+    Py_ssize_t dataLength = 0;
 
     if (!PyArg_ParseTuple(args, "O", &pkey))
         return NULL;
@@ -326,7 +327,7 @@ CMS_VARIANT(_update)(CMS_TYPE * self, PyObject *args)
     {
         PyObject *item;
         char *data;
-        uint32_t dataLength;
+        Py_ssize_t dataLength;
         while (item = PyIter_Next(iterator))
         {
             if (PyTuple_Check(item))
