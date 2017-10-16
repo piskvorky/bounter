@@ -18,7 +18,7 @@ from setuptools import setup, find_packages, Extension
 setup(
     name='bounter',
     version='0.2.0',
-    description='Counter for large datasets in bounded memory',
+    description='Counter for large datasets',
 
     headers=['cbounter/hll.h', 'cbounter/murmur3.h'],
     ext_modules=[
