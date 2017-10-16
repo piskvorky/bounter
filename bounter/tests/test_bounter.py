@@ -28,7 +28,7 @@ class BounterInitTest(unittest.TestCase):
         self.assertEqual(counter.buckets(), 2 ** 16)
 
     def test_cms_init_default(self):
-        counter = bounter(need_iteration=False)
+        counter = bounter(size_mb=64, need_iteration=False)
 
         self.assertEqual(type(counter), CountMinSketch)
         self.assertEqual(type(counter.cms), cmsc.CMS_Conservative)
@@ -45,9 +45,23 @@ class BounterInitTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             bounter(log_counting=8)
 
-    def test_sanity(self):
+    def test_nocounts_init(self):
+        counter = bounter(need_counts=False)
+        self.assertTrue(issubclass(type(counter), CountMinSketch))
+        self.assertEqual(counter.size(), 4)
+
+    def test_sanity_default(self):
         counter = bounter()
         counter.update([u'foo', u'bar', u'foo'])
         self.assertEqual(counter[u'foo'], 2)
         self.assertEqual(counter[u'bar'], 1)
         self.assertEqual(counter.cardinality(), 2)
+
+    def test_sanity_nocount(self):
+        counter = bounter(need_counts=False)
+        counter.update([u'foo', u'bar', u'foo'])
+        self.assertEqual(counter.total(), 3)
+        self.assertEqual(counter.cardinality(), 2)
+
+        with self.assertRaises(NotImplementedError):
+            print(counter[u'foo'])

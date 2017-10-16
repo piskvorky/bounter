@@ -182,3 +182,11 @@ class CountMinSketch(object):
     def __setstate__(self, state):
         self.width, self.depth, self.cell_size_v, self.cms = state
         self.increment = self.cms.increment
+
+
+class CardinalityEstimator(CountMinSketch):
+    def __init__(self):
+        super(CardinalityEstimator, self).__init__(width=1, depth=1)
+
+    def __getitem__(self, key):
+        raise NotImplementedError("Item counting is not supported for cardinality estimator!")
