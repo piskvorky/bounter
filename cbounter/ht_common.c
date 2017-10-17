@@ -11,6 +11,7 @@
 
 #define MAX_PICKLE_CHUNK_SIZE 0x01000000
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "structmember.h"
 #include "murmur3.h"
@@ -160,7 +161,7 @@ static PyMemberDef HT_VARIANT(_members[]) = {
     {NULL} /* Sentinel */
 };
 
-static inline uint32_t HT_VARIANT(_bucket)(HT_TYPE * self, char * data, uint32_t dataLength, char store)
+static inline uint32_t HT_VARIANT(_bucket)(HT_TYPE * self, char * data, Py_ssize_t dataLength, char store)
 {
     uint32_t bucket;
     MurmurHash3_x86_32((void *) data, dataLength, 42, (void *) &bucket);
@@ -170,7 +171,7 @@ static inline uint32_t HT_VARIANT(_bucket)(HT_TYPE * self, char * data, uint32_t
     return bucket;
 }
 
-static inline HT_VARIANT(_cell_t) * HT_VARIANT(_find_cell)(HT_TYPE * self, char * data, uint32_t dataLength, char store)
+static inline HT_VARIANT(_cell_t) * HT_VARIANT(_find_cell)(HT_TYPE * self, char * data, Py_ssize_t dataLength, char store)
 {
     uint32_t bucket = HT_VARIANT(_bucket)(self, data, dataLength, store);
     const HT_VARIANT(_cell_t) * table = self->table;
@@ -219,7 +220,7 @@ static long long HT_VARIANT(_prune_size)(HT_TYPE * self)
 }
 
 
-static inline HT_VARIANT(_cell_t) * HT_VARIANT(_allocate_cell)(HT_TYPE * self, char * data, uint32_t dataLength)
+static inline HT_VARIANT(_cell_t) * HT_VARIANT(_allocate_cell)(HT_TYPE * self, char * data, Py_ssize_t dataLength)
 {
     HT_VARIANT(_cell_t) * cell = HT_VARIANT(_find_cell)(self, data, dataLength, 1);
 
@@ -273,7 +274,7 @@ static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary)
         char * current_key = table[i].key;
         if (current_key)
         {
-            uint32_t data_length = strlen(current_key);
+            Py_ssize_t data_length = strlen(current_key);
             long long current_count = table[i].count;
 
             if (current_count > boundary)
@@ -320,7 +321,7 @@ static void HT_VARIANT(_prune_int)(HT_TYPE *self, long long boundary)
 
 /* Adds a string to the counter. */
 static PyObject *
-HT_VARIANT(_increment_obj)(HT_TYPE *self, char *data, uint32_t dataLength, long long increment)
+HT_VARIANT(_increment_obj)(HT_TYPE *self, char *data, Py_ssize_t dataLength, long long increment)
 {
     if (increment < 0)
     {
@@ -358,7 +359,7 @@ HT_VARIANT(_increment_obj)(HT_TYPE *self, char *data, uint32_t dataLength, long 
 
 
 static char *
-HT_VARIANT(_parse_key)(PyObject * key, uint32_t * dataLength, PyObject ** free_after)
+HT_VARIANT(_parse_key)(PyObject * key, Py_ssize_t * dataLength, PyObject ** free_after)
 {
     char * data = NULL;
     #if PY_MAJOR_VERSION >= 3
@@ -416,7 +417,7 @@ HT_VARIANT(_increment)(HT_TYPE *self, PyObject *args)
 {
     PyObject * pkey;
     PyObject * free_after = NULL;
-    uint32_t dataLength = 0;
+    Py_ssize_t dataLength = 0;
 
     long long increment = 1;
 
@@ -436,7 +437,7 @@ static int
 HT_VARIANT(_setitem)(HT_TYPE *self, PyObject *pKey, PyObject *pValue)
 {
     PyObject * free_after = NULL;
-    uint32_t dataLength = 0;
+    Py_ssize_t dataLength = 0;
     long long value;
 
     char * data = HT_VARIANT(_parse_key)(pKey, &dataLength, &free_after);
@@ -496,7 +497,7 @@ static PyObject *
 HT_VARIANT(_getitem)(HT_TYPE *self, PyObject *key)
 {
     PyObject * free_after = NULL;
-    uint32_t dataLength = 0;
+    Py_ssize_t dataLength = 0;
 
     char * data = HT_VARIANT(_parse_key)(key, &dataLength, &free_after);
     if (!data)
@@ -586,7 +587,7 @@ HT_VARIANT(_reduce)(HT_TYPE *self)
         char* key = table[i].key;
         if (key)
         {
-            int length = strlen(key) + 1;
+            size_t length = strlen(key) + 1;
             memcpy(result_index, key, length);
             result_index += length;
         }
@@ -640,7 +641,7 @@ HT_VARIANT(_set_state)(HT_TYPE * self, PyObject * args)
                 return NULL; // overflow!
             }
 
-            int current_length = strlen(current_word) + 1;
+            size_t current_length = strlen(current_word) + 1;
             char * current_target = malloc(current_length);
             table[i].key = current_target;
             memcpy(current_target, current_word, current_length);
@@ -670,7 +671,7 @@ HT_VARIANT(_print_histo)(HT_TYPE * self)
     {
         long long min = (i < 16) ? i : (8 + (i & 7)) << ((i >> 3) - 1);
         long long max = (i < 16) ? i : ((8 + ((i + 1) & 7)) << (((i + 1) >> 3) - 1)) - 1;
-        printf("%lld - %lld: %lld\n", min, max, self->histo[i]);
+        printf("%lld - %lld: %d\n", min, max, self->histo[i]);
     }
 
     Py_INCREF(Py_None);
@@ -727,7 +728,7 @@ HT_VARIANT(_update)(HT_TYPE * self, PyObject *args)
     {
         PyObject *item;
         char *data;
-        uint32_t dataLength;
+        Py_ssize_t dataLength;
         while (item = PyIter_Next(iterator))
         {
             if (PyTuple_Check(item))
