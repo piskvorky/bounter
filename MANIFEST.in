@@ -1,3 +1,4 @@
+include cbounter/*.c cbounter/*.h
 include LICENSE
 include README.md
 include CHANGELOG.md
