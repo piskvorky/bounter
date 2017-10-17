@@ -1,137 +1,158 @@
-Bounded Counter – Frequency estimation for large sets
-======================================================================
+# Bounter -- Counter for large datasets
 
-**Work in progress!**
+[![Build Status](https://travis-ci.org/RaRe-Technologies/bounter.svg?branch=master)](https://travis-ci.org/RaRe-Technologies/bounter)[![GitHub release](https://img.shields.io/github/release/rare-technologies/bounter.svg?maxAge=3600)](https://github.com/RaRe-Technologies/bounter/releases)[![Mailing List](https://img.shields.io/badge/-Mailing%20List-lightgrey.svg)](https://groups.google.com/forum/#!forum/gensim)[![Gitter](https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-09a3d5.svg)](https://gitter.im/RaRe-Technologies/gensim)[![Follow](https://img.shields.io/twitter/follow/spacy_io.svg?style=social&label=Follow)](https://twitter.com/gensim_py)
 
-Count frequencies in massive data sets using fixed memory footprint with a smart
-[Count-min Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) and HashTable implementation.
+Bounter is a Python library, written in C, for extremely fast probabilistic counting of item frequencies in massive datasets, using only a small fixed memory footprint.
 
-Contains implementation of Count-min Sketch table with conservative update, as well as our own implementation
-using logarithmic probabilistic counter for reducing the space requirement (*log1024, log8*).
-Uses an embedded [hyperloglog](https://github.com/ascv/HyperLogLog) counter to estimate the cardinality of the set of elements (how many distinct elements are tracked).
+## Why Bounter?
 
-The package also contains a fast HashTable counter allocated with bounded memory which removes its low-count objects
-instead of expanding.
+Bounter lets you count how many times an item appears, similar to Python's built-in `dict` or `Counter`:
 
 ```python
-cms = CountMinSketch(size_mb=512) # Use 512 MB
-print(cms.width)  # 16 777 216
-print(cms.depth)   # 8
-print(cms.size)  # 536 870 912 (512 MB in bytes)
+from bounter import bounter
 
-cms.increment("foo")
-cms.increment("bar")
-cms.increment("foo")
+counts = bounter(size_mb=1024)  # use at most 1 GB of RAM
+counts.update([u'a', 'few', u'words', u'a', u'few', u'times'])  # count item frequencies
 
-print(cms["foo"]) # 2
-print(cms["bar"]) # 1
-print(cms.cardinality()) # 2
-print(cms.total()) # 3
+print(counts[u'few'])  # query the counts
+2
 ```
 
-Parameters
-----------
+However, unlike `dict` or `Counter`, Bounter can process huge collections where the items would not even fit in RAM. This commonly happens in Machine Learning and NLP, with tasks like **dictionary building** or **collocation detection** that need to estimate counts of billions of items (token ngrams) for their statistical scoring and subsequent filtering.
 
--   **size_mb** Maximum size of the structure in memory in megabytes.
--   **Width**: The number of columns (hash buckets) in a single row of the table. Must be a power of 2.
-    Significantly affects precision and memory footprint. For precise results, this should be no smaller than one
-    order of magnitude away from the cardinality of the set.
-    For significantly smaller widths, deterioration will occur.
-    For instance, to store all bigrams in English Wikipedia (1,857,420,106 bigrams, 179,413,989 unique),
-    good results can be achieved with a width of 67,108,864 (2^26) (37%).
--   **Depth**: Number of rows, significant for the reliability of the result. Linearly affects speed of the
-    algorithm as well as its memory footprint. For best results, use a small number such as 5.
-    Using more than 8 is wasteful, better put that memory
-    in width instead or use 'basic' or 'conservative' algorithms instead.
--   **Algorithm**: There are several algorithms available:
-    -   *conservative* Count-min Sketch as described on as described on [Wikipedia](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch).
-        Uses 4 bytes per cell, storing values up to 2^32 - 1
-    -   *log1024* is a conservative-update probabilistic counter with a value that fits into 2 bytes. Values of this counter
-        up to 2048 are precise and larger values are off by +/- 2%. The maximum value is larger than 2^71
-    -   *log8* is a conservative-update probabilistic counter that fits into just 1 byte. Values of this counter
-        up to 8 are precise and larger values can be off by +/- 30%. The maximum value is larger than 2^33        
+Bounter implements approximative algorithms using optimized low-level C structures, to avoid the overhead of Python objects. It lets you specify the maximum amount of RAM you want to use. In the Wikipedia example below, Bounter uses 17x less memory compared to `Counter`.
 
-Memory
-------
-To calculate memory footprint:
-    ( width * depth * cell_size ) + HLL size
+Bounter is also marginally faster than the built-in `dict` and `Counter`, so wherever you can represent your **items as strings** (both byte-strings and unicode are fine, and Bounter works in both Python2 and Python3), there's no reason not to use Bounter instead.
 
-Cell size is
-   - 4B for conservative algorithm
-   - 2B for log1024
-   - 1B for log8
-   
-HLL size is 64 KB
+## Installation
 
-Example:
-    width 2^25 (33,554,432), depth 8, logcons1024 (2B) has 2^(25 + 3 + 1) + 64 KB = 536.9 MB
-    Can be pickled to disk with this exact size.
+Bounter has no dependencies beyond Python >= 2.7 or Python >= 3.3 and a C compiler:
 
-Performance
------------
-### Testing on Wikipedia set
-We have counted unigrams and bigrams in English Wikipedia dataset to evaluate the counters.
-In each case, we have counted the entire data set into all bounter structures:
+```bash
+pip install bounter  # install from PyPI
+```
+
+Or, if you prefer to install from the [source tar.gz](https://pypi.python.org/pypi/bounter):
+
+```bash
+python setup.py test  # run unit tests
+python setup.py install
+```
+
+## How does it work?
+
+No magic, just some clever use of approximative algorithms and solid engineering.
+
+In particular, Bounter implements three different algorithms under the hood, depending on what type of "counting" you need:
+
+1. **[Cardinality estimation](https://en.wikipedia.org/wiki/Count-distinct_problem): "How many unique items are there?"**
+
+  ```python
+  from bounter import bounter
+
+  counts = bounter(need_counts=False)
+  counts.update(['a', 'b', 'c', 'a', 'b'])
+
+  print(counts.cardinality())  # cardinality estimation
+  3
+  print(counts.total())  # efficiently accumulates counts across all items
+  5
+  ```
+
+  This is the simplest use case and needs the least amount of memory, by using the [HyperLogLog algorithm](http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) (built on top of Joshua Andersen's [HLL](https://github.com/ascv/HyperLogLog) code).
+
+2. **Item frequencies: "How many times did this item appear?"**
+
+  ```python
+  from bounter import bounter
+
+  counts = bounter(need_iteration=False, size_mb=200)
+  counts.update(['a', 'b', 'c', 'a', 'b'])
+  print(counts.total(), counts.cardinality())  # total and cardinality still work
+  (5L, 3L)
+
+  print(counts['a'])  # supports asking for counts of individual items
+  2
+  ```
+
+  This uses the [Count-min Sketch algorithm](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) to estimate item counts efficiently, in a **fixed amount of memory**. See the [API docs](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py) for full details and parameters.
+
+As a further optimization, Count-min Sketch optionally support a [logarithmic probabilistic counter](https://en.wikipedia.org/wiki/Approximate_counting_algorithm):
+
+ - `bounter(need_iteration=False)`: default option. Exact counter, no probabilistic counting. Occupies 4 bytes (max value 2^32) per bucket.
+ - `bounter(need_iteration=False, log_counting=1024)`: an integer counter that occupies 2 bytes. Values up to 2048 are exact; larger values are off by +/- 2%. The maximum representable value is around 2^71.
+ - `bounter(need_iteration=False, log_counting=8)`: a more aggressive probabilistic counter that fits into just 1 byte. Values up to 8 are exact and larger values can be off by +/- 30%. The maximum representable value is about 2^33.
+
+Such memory vs. accuracy tradeoffs are sometimes desirable in NLP, where being able to handle very large collections is more important than whether an event occurs exactly 55,482x or 55,519x.
+
+3. **Full item iteration: "What are the items and their frequencies?"**
+
+  ```python
+  from bounter import bounter
+
+  counts = bounter(size_mb=200)  # default version, unless you specify need_items or need_counts
+  counts.update(['a', 'b', 'c', 'a', 'b'])
+  print(counts.total(), counts.cardinality())  # total and cardinality still work
+  (5L, 3)
+  print(counts['a'])  # individual item frequency still works
+  2
+
+  print(list(counts)) # iterator returns keys, just like Counter
+  [u'b', u'a', u'c']
+  print(list(counts.iteritems()))  # supports iterating over key-count pairs, etc.
+  [(u'b', 2L), (u'a', 2L), (u'c', 1L)]
+  ```
+
+  Stores the keys (strings) themselves in addition to the total cardinality and individual item frequency (8 bytes). Uses the most memory, but supports the widest range of functionality.
+
+  This option uses a custom C hash table underneath, with optimized string storage. It will remove its low-count objects when nearing the maximum alotted memory, instead of expanding the table.
+
+----
+
+For more details, see the [API docstrings](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py).
+
+## Example on the English Wikipedia
+
+Let's count the frequencies of all bigrams in the English Wikipedia corpus:
 
 ```python
-    with smart_open('title_tokens.txt.gz') as wiki:
-        for line in wiki:
-            words = line.decode().split('\t')[1].split()
-            counter.update(words)
+with smart_open('wikipedia_tokens.txt.gz') as wiki:
+    for line in wiki:
+        words = line.decode().split()
+        bigrams = zip(words, words[1:])
+        counter.update(u' '.join(pair for pair in bigrams))
+
+print(counter[u'czech republic']) # Output: 42099
 ```
 
-Then, we've selected a random sample of words as a validation set (unigrams, resp. bigrams) and compared the real
-count of these with the structures.
-All counters use the same validation set.
+The Wikipedia dataset contained 7,661,318 distinct words across 1,860,927,726 total words, and 179,413,989 distinct bigrams across 1,857,420,106 total bigrams. Storing them in a naive built-in `dict` would consume over 31 GB RAM.
 
-#### Unigrams
-The Wikipedia data set contains 7,661,318 distinct words in 1,860,927,726 total words. To store all of 
-these counts efficiently (but without compression), we would need approximately 160 MB (~ 22B per word).
+To test the accuracy of Bounter, we automatically extracted [collocations](https://en.wikipedia.org/wiki/Collocation) (common multi-word expressions, such as "New York", "network license", "Supreme Court" or "elementary school") from these bigram counts.
 
-##### Timings
+We compared the set of collocations extracted from Counter (exact counts, needs lots of memory) vs Bounter (approximate counts, bounded memory) and present the precision and recall here:
 
-| Algorithm        |        Min  |         Max |     Average |
-|------------------|------------:|------------:|------------:|
-| Counter          |       379s  |        379s |        379s |
-| HashTable        |       293s  |        312s |        304s |
-| CMS Conservative |       685s  |        703s |        698s |
-| CMS log1024      |       661s  |        709s |        692s |
-| CMS log8         |       630s  |        700s |        675s |
+| Algorithm                         | Time to build | Memory  | Precision | Recall | F1 score
+|-----------------------------------|--------------:|--------:|----------:|-------:|---------:|
+| `Counter` (built-in)              |       32m 26s | 31 GB |      100% |   100% |     100% |
+| `bounter(size_mb=128, need_iteration=False, log_counting=8)` |         19m 53s |   **128 MB** | 95.02% | 97.10% | 96.04% |
+| `bounter(size_mb=1024)`           |       17m 54s |    1 GB |     100% |  99.27% |   99.64% |
+| `bounter(size_mb=1024, need_iteration=False)` |     19m 58s |   1 GB |    0.9964% | 100% | 99.82% |
+| `bounter(size_mb=1024, need_iteration=False, log_counting=1024)` |         20m 05s |   1 GB | 100% | 100% | **100%** |
+| `bounter(size_mb=1024, need_iteration=False, log_counting=8)` |         19m 59s |   1 GB | 97.45% | 97.45% | 97.45% |
+| `bounter(size_mb=4096)`           |       16m 21s |   4 GB |     100% |  100% |  100% |
+| `bounter(size_mb=4096, need_iteration=False)` |        20m 14s  |   4 GB|    100% | 100% | 100% |
+| `bounter(size_mb=4096, need_iteration=False, log_counting=1024)` |        20m 14s |   4 GB |    100% | 99.64% | 99.82% |
 
+Bounter achieves a perfect F1 score of 100% at 31x less memory (1GB vs 31GB), compared to a built-in `Counter` or `dict`. It is also 61% faster.
 
-Python Counter (dict) uses approximately 800 MB to store this set in RAM.
- 
-![Precision on unigrams data](docs/bounter_unigrams_wiki.png)
+Even with just 128 MB (250x less memory), its F1 score is still 96.04%.
 
-#### Bigrams
-The Wikipedia data set contains 179,413,989 distinct bigrams in 1,857,420,106 total bigrams.
-To store all of these counts efficiently (but without compression), we would need approximately 160 MB (~ 30B per word).
-To store all of these counts properly, we would need approximately 5,133 MB (without compression).
+# Support
 
-Storing them all in a single Python counter would require approximately 17.2 GB RAM. 
+Use [Github issues](https://github.com/RaRe-Technologies/bounter/issues) to report bugs, and our [mailing list](https://groups.google.com/forum/#!forum/gensim) for general discussion and feature ideas.
 
-##### Timings
+----------------
 
-| Algorithm        |        Min  |         Max |     Average |
-|------------------|------------:|------------:|------------:|
-| Counter          |         N/A |         N/A |         N/A |
-| HashTable        |       717s  |        945s |        811s |
-| CMS Conservative |      1028s  |       1118s |       1088s |
-| CMS log1024      |      1013s  |       1294s |       1096s |
-| CMS log8         |      1001s  |       1219s |       1103s |
+`Bounter` is open source software released under the [MIT license](https://github.com/rare-technologies/bounter/blob/master/LICENSE).
 
-
-![Precision on bigrams data](docs/bounter_bigrams_wiki.png)
-
-We used words collocations to distinguish phrases using our collected data. As a reference,
-we calculated whether bigram is a phrase using reference exact counts on a set of 2000 randomly
-chosen sample bigrams. Then we used value from our counter to determine whether the same bigram is a phrase,
-and calculated precision, recall, and F1 value for correctly characterizing phrases according to
- reference. The following table shows the F1 values for each counter: 
-
-Algorithm | 64 MB | 128 MB | 256 MB | 512 MB | 1024 MB | 2048 MB | 4096 MB | 8192 MB
-----------|-------|--------|--------|--------|---------|---------|---------|--------
-bi_cms_conservative |  |  | 0.820 | 0.993 | 0.998 | 1 | 1 | 1
-bi_cms_log1024 |  | 0.818 | 0.987 | 0.993 | 1 | 0.995 | 0.998 | 
-bi_cms_log8 | 0.784 | 0.960 | 0.969 | 0.969 | 0.975 | 0.974 |  | 
-bi_hashtable |  | 0.917 | 0.952 | 0.978 | 0.996 | 1 | 1 |  
+Copyright (c) 2017 [RaRe Technologies](https://rare-technologies.com/)
