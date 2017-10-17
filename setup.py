@@ -17,7 +17,7 @@ from setuptools import setup, find_packages, Extension
 
 setup(
     name='bounter',
-    version='1.0.1',
+    version='1.0.0rc1',
     description='Counter for large datasets',
 
     headers=['cbounter/hll.h', 'cbounter/murmur3.h'],
