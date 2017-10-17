@@ -1,5 +1,15 @@
 Changes
 ===========
+## 1.0.0, 2017-10-17
+
+:star2: Release version:
+
+* single unified bounter API for easy initialization, including the new "layered" functionality approach
+* simple CardinalityCounter to support Layer 1 
+* selecting iteration 
+* iteration methods for HashTable (keys, values, etc.)
+* many small fixes and api tweaks
+* README
 
 ## 0.2.0, 2017-09-01
 * Added a fast HashTable counter implemented in C that removes low-count entries when it is running out of memory.    

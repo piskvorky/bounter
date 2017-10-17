@@ -17,7 +17,7 @@ from setuptools import setup, find_packages, Extension
 
 setup(
     name='bounter',
-    version='0.2.0',
+    version='1.0.0',
     description='Counter for large datasets',
 
     headers=['cbounter/hll.h', 'cbounter/murmur3.h'],
@@ -42,7 +42,7 @@ setup(
     test_suite="bounter.tests",
 
     classifiers=[  # from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
