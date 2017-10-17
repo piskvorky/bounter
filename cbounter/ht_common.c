@@ -797,6 +797,12 @@ PyObject* HT_VARIANT(_ITER_iternext)(HT_VARIANT(_ITER_TYPE) *self)
 
     if (i < buckets)
     {
+        if (self->result_type == ITER_RESULT_VALUES)
+        {
+            self->i = i + 1;
+            return Py_BuildValue("L", table[i].count);
+        }
+
         PyObject * result;
         char * current_key = table[i].key;
         PyObject * pkey;
@@ -915,6 +921,11 @@ HT_VARIANT(_HT_iter_K)(HT_TYPE *self)
     return HT_VARIANT(_make_iterator)(self, ITER_RESULT_KEYS);
 }
 
+static HT_VARIANT(_ITER_TYPE) *
+HT_VARIANT(_HT_iter_V)(HT_TYPE *self)
+{
+    return HT_VARIANT(_make_iterator)(self, ITER_RESULT_VALUES);
+}
 
 static PyMethodDef HT_VARIANT(_methods)[] = {
     {"increment", (PyCFunction)HT_VARIANT(_increment), METH_VARARGS,
@@ -928,6 +939,21 @@ static PyMethodDef HT_VARIANT(_methods)[] = {
     },
     {"items", (PyCFunction)HT_VARIANT(_HT_iter_KV), METH_NOARGS,
      "Iterates over all key-value pairs."
+    },
+    {"iteritems", (PyCFunction)HT_VARIANT(_HT_iter_KV), METH_NOARGS,
+     "Iterates over all key-value pairs."
+    },
+    {"keys", (PyCFunction)HT_VARIANT(_HT_iter_K), METH_NOARGS,
+     "Iterates over all keys."
+    },
+    {"iterkeys", (PyCFunction)HT_VARIANT(_HT_iter_K), METH_NOARGS,
+     "Iterates over all keys."
+    },
+    {"values", (PyCFunction)HT_VARIANT(_HT_iter_V), METH_NOARGS,
+     "Iterates over all non-zero counts."
+    },
+    {"itervalues", (PyCFunction)HT_VARIANT(_HT_iter_V), METH_NOARGS,
+     "Iterates over all non-zero counts."
     },
     {"update", (PyCFunction)HT_VARIANT(_update), METH_VARARGS,
      "Adds all pairs from another counter, or adds all items from an iterable."

@@ -63,10 +63,10 @@ class CountMinSketch(object):
                 If width is not provided, the algorithm chooses the maximum width to fill the available size.
                 The more, the better, should be very large, preferably in the same order of magnitude as the cardinality
                 of the counted set.
-            log_counting (int): Use logarithmic counter value for reduced bucket size:
+            log_counting (int): Use logarithmic approximate counter value for reduced bucket size:
                 - None (default): 4B, no counter error
-                - 1024: 2B, counter error ~2% for values larger than 1024
-                - 8: 1B, counter error ~30% for values larger than 8
+                - 1024: 2B, value approximation error ~2% for values larger than 2048
+                - 8: 1B, value approximation error ~30% for values larger than 16
         """
 
         cell_size = CountMinSketch.cell_size(log_counting)
