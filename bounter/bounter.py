@@ -11,11 +11,11 @@ from .count_min_sketch import CountMinSketch, CardinalityEstimator
 from bounter_htc import HT_Basic as HashTable
 
 
-def bounter(size_mb=64, need_iteration=True, need_counts=True, log_counting=None):
+def bounter(size_mb=None, need_iteration=True, need_counts=True, log_counting=None):
     """Factory method for bounter implementation.
 
     Args:
-            size_mb (int): Desired memory footprint of the counter. Defaults to 64MB
+            size_mb (int): Desired memory footprint of the counter.
             need_iteration (Bool): With `True`, create a `HashTable` implementation which can
                 iterate over inserted key/value pairs.
                 With `False`, create a `CountMinSketch` implementation which performs better in limited-memory scenarios,
@@ -29,6 +29,8 @@ def bounter(size_mb=64, need_iteration=True, need_counts=True, log_counting=None
     """
     if not need_counts:
         return CardinalityEstimator()
+    if size_mb is None:
+        raise ValueError("Max size in MB must be provided.")
     if need_iteration:
         if log_counting:
             raise ValueError("Log counting is only supported with CMS implementation (need_iteration=False).")

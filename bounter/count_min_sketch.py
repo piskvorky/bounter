@@ -73,7 +73,7 @@ class CountMinSketch(object):
         self.cell_size_v = cell_size
 
         if not isinstance(size_mb, int):
-            raise ValueError("size_mb must be an integer!")
+            raise ValueError("size_mb must be an integer.")
 
         if width is None and depth is None:
             self.width = 1 << (size_mb * (2 ** 20) // (cell_size * 8 * 2)).bit_length()
@@ -83,17 +83,17 @@ class CountMinSketch(object):
             avail_width = (size_mb * (2 ** 20)) // (depth * cell_size)
             self.width = 1 << (avail_width.bit_length() - 1)
             if not self.width:
-                raise ValueError("Requested depth is too large for maximum memory size!")
+                raise ValueError("Requested depth is too large for maximum memory size.")
         elif depth is None:
             if width != 1 << (width.bit_length() - 1):
-                raise ValueError("Requested width must be a power of 2!")
+                raise ValueError("Requested width must be a power of 2.")
             self.width = width
             self.depth = (size_mb * (2 ** 20)) // (width * cell_size)
             if not self.depth:
-                raise ValueError("Requested width is too large for maximum memory size!")
+                raise ValueError("Requested width is too large for maximum memory size.")
         else:
             if width != 1 << (width.bit_length() - 1):
-                raise ValueError("Requested width must be a power of 2!")
+                raise ValueError("Requested width must be a power of 2.")
             self.width = width
             self.depth = depth
 
@@ -104,7 +104,7 @@ class CountMinSketch(object):
         elif log_counting is None:
             self.cms = cmsc.CMS_Conservative(width=self.width, depth=self.depth)
         else:
-            raise ValueError("Unsupported counting parameter! Use None, 8, or 1024!")
+            raise ValueError("Unsupported parameter log_counting=%s. Use None, 8, or 1024." % log_counting)
 
         # optimize calls by directly binding to C implementation
         self.increment = self.cms.increment
@@ -189,4 +189,4 @@ class CardinalityEstimator(CountMinSketch):
         super(CardinalityEstimator, self).__init__(width=1, depth=1)
 
     def __getitem__(self, key):
-        raise NotImplementedError("Item counting is not supported for cardinality estimator!")
+        raise NotImplementedError("Individual item counting is not supported for cardinality estimator!")

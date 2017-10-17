@@ -18,8 +18,12 @@ class BounterInitTest(unittest.TestCase):
     """
 
     def test_default_init(self):
-        counter = bounter()
+        counter = bounter(7)
         self.assertEqual(type(counter), HashTable)
+
+    def test_no_size_init(self):
+        with self.assertRaises(ValueError):
+            counter = bounter()
 
     def test_explicit_init(self):
         counter = bounter(size_mb=2, need_iteration=True)
@@ -43,7 +47,7 @@ class BounterInitTest(unittest.TestCase):
 
     def test_ht_log_init(self):
         with self.assertRaises(ValueError):
-            bounter(log_counting=8)
+            bounter(size_mb=4, log_counting=8)
 
     def test_nocounts_init(self):
         counter = bounter(need_counts=False)
@@ -51,7 +55,7 @@ class BounterInitTest(unittest.TestCase):
         self.assertEqual(counter.size(), 4)
 
     def test_sanity_default(self):
-        counter = bounter()
+        counter = bounter(size_mb=16)
         counter.update([u'foo', u'bar', u'foo'])
         self.assertEqual(counter[u'foo'], 2)
         self.assertEqual(counter[u'bar'], 1)
