@@ -14,7 +14,8 @@ from bounter import bounter
 counts = bounter(size_mb=1024)  # use at most 1 GB of RAM
 counts.update([u'a', 'few', u'words', u'a', u'few', u'times'])  # count item frequencies
 
-print(counts[u'few'])  # Query the counts. Output: 2L
+print(counts[u'few'])  # query the counts
+2
 ```
 
 However, unlike `dict` or `Counter`, Bounter can process huge collections where the items would not even fit in RAM. This commonly happens in Machine Learning and NLP, with tasks like **dictionary building** or **collocation detection** that need to estimate counts of billions of items (token ngrams) for their statistical scoring and subsequent filtering.
@@ -52,8 +53,10 @@ In particular, Bounter implements three different algorithms under the hood, dep
   counts = bounter(need_counts=False)
   counts.update(['a', 'b', 'c', 'a', 'b'])
 
-  print(counts.cardinality())  # cardinality estimation. Output: 3L
-  print(counts.total())  # Counts accumulated across all items. Output: 5L
+  print(counts.cardinality())  # cardinality estimation
+  3
+  print(counts.total())  # efficiently accumulates counts across all items
+  5
   ```
 
   This is the simplest use case and needs the least amount of memory, by using the [HyperLogLog algorithm](http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) (built on top of Joshua Andersen's [HLL](https://github.com/ascv/HyperLogLog) code).
@@ -65,8 +68,11 @@ In particular, Bounter implements three different algorithms under the hood, dep
 
   counts = bounter(need_iteration=False, size_mb=200)
   counts.update(['a', 'b', 'c', 'a', 'b'])
-  print(counts.total(), counts.cardinality())  # Total and cardinality still work. Output: (5L, 3L)
-  print(counts['a'])  # supports asking for counts of individual items. Output: 2L
+  print(counts.total(), counts.cardinality())  # total and cardinality still work
+  (5L, 3L)
+
+  print(counts['a'])  # supports asking for counts of individual items
+  2
   ```
 
   This uses the [Count-min Sketch algorithm](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) to estimate item counts efficiently, in a **fixed amount of memory**. See the [API docs](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py) for full details and parameters.
@@ -86,14 +92,18 @@ Such memory vs. accuracy tradeoffs are sometimes desirable in NLP, where being a
 
   counts = bounter(size_mb=200)  # default version, unless you specify need_items or need_counts
   counts.update(['a', 'b', 'c', 'a', 'b'])
-  print(counts.total(), counts.cardinality())  # Total and cardinality still work. Output: (5L, 3)
-  print(counts['a'])  # Item frequency works. Output: 2L
+  print(counts.total(), counts.cardinality())  # total and cardinality still work
+  (5L, 3)
+  print(counts['a'])  # individual item frequency still works
+  2
 
-  print(list(counts)) # Iterator returns keys. Output: [u'b', u'a', u'c']
-  print(list(counts.items()))  # items() iterates over key-count pairs. Output: [(u'b', 2L), (u'a', 2L), (u'c', 1L)]
+  print(list(counts)) # iterator returns keys, just like Counter
+  [u'b', u'a', u'c']
+  print(list(counts.iteritems()))  # supports iterating over key-count pairs, etc.
+  [(u'b', 2L), (u'a', 2L), (u'c', 1L)]
   ```
 
-  Also stores the keys (strings) themselves in addition to the total cardinality and individual item frequency. Uses the most memory, but supports the widest range of functionality.
+  Stores the keys (strings) themselves in addition to the total cardinality and individual item frequency (8 bytes). Uses the most memory, but supports the widest range of functionality.
 
   This option uses a custom C hash table underneath, with optimized string storage. It will remove its low-count objects when nearing the maximum alotted memory, instead of expanding the table.
 
@@ -133,7 +143,7 @@ We compared the set of collocations extracted from Counter (exact counts, needs 
 | `bounter(size_mb=4096, need_iteration=False)` |        20m 14s  |   4 GB|    100% | 100% | 100% |
 | `bounter(size_mb=4096, need_iteration=False, log_counting=1024)` |        20m 14s |   4 GB |    100% | 99.64% | 99.82% |
 
-Bounter achieves a perfect F1 score of 100% at 31x less memory (1GB vs 31 GB), compared to a built-in `Counter` or `dict`. It is also 61% faster.
+Bounter achieves a perfect F1 score of 100% at 31x less memory (1GB vs 31GB), compared to a built-in `Counter` or `dict`. It is also 61% faster.
 
 Even with just 128 MB (250x less memory), its F1 score is still 96.04%.
 
