@@ -47,7 +47,7 @@ In particular, Bounter implements three different algorithms under the hood, dep
 
 1. **[Cardinality estimation](https://en.wikipedia.org/wiki/Count-distinct_problem): "How many unique items are there?"**
 
-  ```python
+```python
 from bounter import bounter
 
 counts = bounter(need_counts=False)
@@ -57,13 +57,13 @@ print(counts.cardinality())  # cardinality estimation
 3
 print(counts.total())  # efficiently accumulates counts across all items
 5
-  ```
+```
 
   This is the simplest use case and needs the least amount of memory, by using the [HyperLogLog algorithm](http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) (built on top of Joshua Andersen's [HLL](https://github.com/ascv/HyperLogLog) code).
 
 2. **Item frequencies: "How many times did this item appear?"**
 
-  ```python
+```python
 from bounter import bounter
 
 counts = bounter(need_iteration=False, size_mb=200)
@@ -73,7 +73,7 @@ print(counts.total(), counts.cardinality())  # total and cardinality still work
 
 print(counts['a'])  # supports asking for counts of individual items
 2
-  ```
+```
 
   This uses the [Count-min Sketch algorithm](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) to estimate item counts efficiently, in a **fixed amount of memory**. See the [API docs](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py) for full details and parameters.
 
@@ -87,7 +87,7 @@ Such memory vs. accuracy tradeoffs are sometimes desirable in NLP, where being a
 
 3. **Full item iteration: "What are the items and their frequencies?"**
 
-  ```python
+```python
 from bounter import bounter
 
 counts = bounter(size_mb=200)  # default version, unless you specify need_items or need_counts
@@ -101,7 +101,7 @@ print(list(counts)) # iterator returns keys, just like Counter
 [u'b', u'a', u'c']
 print(list(counts.iteritems()))  # supports iterating over key-count pairs, etc.
 [(u'b', 2L), (u'a', 2L), (u'c', 1L)]
-  ```
+```
 
   Stores the keys (strings) themselves in addition to the total cardinality and individual item frequency (8 bytes). Uses the most memory, but supports the widest range of functionality.
 
