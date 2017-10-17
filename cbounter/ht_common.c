@@ -929,49 +929,49 @@ HT_VARIANT(_HT_iter_V)(HT_TYPE *self)
 
 static PyMethodDef HT_VARIANT(_methods)[] = {
     {"increment", (PyCFunction)HT_VARIANT(_increment), METH_VARARGS,
-     "Adds a string to the counter."
+     "Add a string to the counter."
     },
     {"cardinality", (PyCFunction)HT_VARIANT(_cardinality), METH_NOARGS,
-     "Returns an estimate for the number of distinct items inserted into the counter. Does not work correctly when values are deleted!"
+     "Return an estimate for the number of distinct items inserted into the counter. Does not work correctly when values are deleted!"
     },
     {"total", (PyCFunction)HT_VARIANT(_total), METH_NOARGS,
-     "Returns a precise total sum of all increments performed on this counter. Does not work correcly with deleting values or setting them directly when pruning kicks in."
+     "Return a precise total sum of all increments performed on this counter. Does not work correcly with deleting values or setting them directly when pruning kicks in."
     },
     {"items", (PyCFunction)HT_VARIANT(_HT_iter_KV), METH_NOARGS,
-     "Iterates over all key-value pairs."
+     "Iterate over all key-value pairs."
     },
     {"iteritems", (PyCFunction)HT_VARIANT(_HT_iter_KV), METH_NOARGS,
-     "Iterates over all key-value pairs."
+     "Iterate over all key-value pairs."
     },
     {"keys", (PyCFunction)HT_VARIANT(_HT_iter_K), METH_NOARGS,
-     "Iterates over all keys."
+     "Iterate over all keys."
     },
     {"iterkeys", (PyCFunction)HT_VARIANT(_HT_iter_K), METH_NOARGS,
-     "Iterates over all keys."
+     "Iterate over all keys."
     },
     {"values", (PyCFunction)HT_VARIANT(_HT_iter_V), METH_NOARGS,
-     "Iterates over all non-zero counts."
+     "Iterate over all non-zero counts."
     },
     {"itervalues", (PyCFunction)HT_VARIANT(_HT_iter_V), METH_NOARGS,
-     "Iterates over all non-zero counts."
+     "Iterate over all non-zero counts."
     },
     {"update", (PyCFunction)HT_VARIANT(_update), METH_VARARGS,
-     "Adds all pairs from another counter, or adds all items from an iterable."
+     "Add all pairs from another counter, or add all items from an iterable."
     },
     {"quality", (PyCFunction)HT_VARIANT(_quality), METH_NOARGS,
-     "Returns the current estimated overflow rating of the structure, calculated as (cardinality / available buckets)."
+     "Return the current estimated overflow rating of the structure, calculated as (cardinality / available buckets)."
     },
     {"_histo", (PyCFunction)HT_VARIANT(_print_histo), METH_NOARGS,
-     "Iterates over all key-value pairs."
+     "Print histogram of frequencies maintained by the structure."
     },
     {"prune", (PyCFunction)HT_VARIANT(_prune), METH_VARARGS,
-     "Removes all entries with count X or less."
+     "Remove all entries with count X or less."
     },
     {"buckets", (PyCFunction)HT_VARIANT(_buckets), METH_NOARGS,
-     "Returns the total number of buckets in the hashtable."
+     "Return the total number of buckets in the hashtable."
     },
     {"_mem", (PyCFunction)HT_VARIANT(_print_alloc), METH_NOARGS,
-     "Returns allocated memory on the heap in bytes."
+     "Return allocated memory on the heap in bytes (does not include OS overhead such as padding and bookkeeping)."
     },
     {"__reduce__", (PyCFunction)HT_VARIANT(_reduce), METH_NOARGS,
      "Serialization function for pickling."

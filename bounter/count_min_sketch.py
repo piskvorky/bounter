@@ -72,8 +72,8 @@ class CountMinSketch(object):
         cell_size = CountMinSketch.cell_size(log_counting)
         self.cell_size_v = cell_size
 
-        if not isinstance(size_mb, int):
-            raise ValueError("size_mb must be an integer.")
+        if size_mb is None or not isinstance(size_mb, int):
+            raise ValueError("size_mb must be an integer representing the maximum size of the structure in MB")
 
         if width is None and depth is None:
             self.width = 1 << (size_mb * (2 ** 20) // (cell_size * 8 * 2)).bit_length()
