@@ -22,12 +22,12 @@ class CountMinSketchPickleCommonTest(unittest.TestCase):
     Functional tests for determining size (cardinality) of hashtable and iterations.
     """
 
-    def __init__(self, methodName='runTest', algorithm='conservative'):
-        self.algorithm = algorithm
+    def __init__(self, methodName='runTest', log_counting=None):
+        self.log_counting = log_counting
         super(CountMinSketchPickleCommonTest, self).__init__(methodName=methodName)
 
     def setUp(self):
-        self.cms = CountMinSketch(2, algorithm=self.algorithm)
+        self.cms = CountMinSketch(2, log_counting=self.log_counting)
 
     def tearDown(self):
         if os.path.isfile(filename):
@@ -91,17 +91,17 @@ class CountMinSketchPickleCommonTest(unittest.TestCase):
 
 class CountMinSketchPickleConservativeTest(CountMinSketchPickleCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchPickleConservativeTest, self).__init__(methodName=methodName, algorithm='conservative')
+        super(CountMinSketchPickleConservativeTest, self).__init__(methodName=methodName, log_counting=None)
 
 
 class CountMinSketchPickleLog1024Test(CountMinSketchPickleCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchPickleLog1024Test, self).__init__(methodName=methodName, algorithm='log1024')
+        super(CountMinSketchPickleLog1024Test, self).__init__(methodName=methodName, log_counting=1024)
 
 
 class CountMinSketchPickleLog8Test(CountMinSketchPickleCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchPickleLog8Test, self).__init__(methodName=methodName, algorithm='log8')
+        super(CountMinSketchPickleLog8Test, self).__init__(methodName=methodName, log_counting=8)
 
 
 def load_tests(loader, tests, pattern):

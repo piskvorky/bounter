@@ -13,8 +13,8 @@ from bounter import CountMinSketch
 
 
 class CountMinSketchUpdateCommonTest(unittest.TestCase):
-    def __init__(self, methodName='runTest', algorithm='conservative'):
-        self.algorithm = algorithm
+    def __init__(self, methodName='runTest', log_counting=None):
+        self.log_counting = log_counting
         super(CountMinSketchUpdateCommonTest, self).__init__(methodName=methodName)
 
     """
@@ -22,7 +22,7 @@ class CountMinSketchUpdateCommonTest(unittest.TestCase):
     """
 
     def setUp(self):
-        self.cms = CountMinSketch(1, algorithm=self.algorithm)
+        self.cms = CountMinSketch(1, log_counting=self.log_counting)
 
     def test_update_numbers(self):
         """
@@ -102,7 +102,7 @@ class CountMinSketchUpdateCommonTest(unittest.TestCase):
         expected = {'a': 16, 'b': 7, 'c': 8, 'd': 5, 'e': 13}
 
         self.cms.update(data1)
-        cms2 = CountMinSketch(1, algorithm=self.algorithm)
+        cms2 = CountMinSketch(1, log_counting=self.log_counting)
         cms2.update(data2)
         self.cms.update(cms2)
 
@@ -114,17 +114,17 @@ class CountMinSketchUpdateCommonTest(unittest.TestCase):
 
 class CountMinSketchUpdateConservativeTest(CountMinSketchUpdateCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchUpdateConservativeTest, self).__init__(methodName=methodName, algorithm='conservative')
+        super(CountMinSketchUpdateConservativeTest, self).__init__(methodName=methodName, log_counting=None)
 
 
 class CountMinSketchUpdateLog1024Test(CountMinSketchUpdateCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchUpdateLog1024Test, self).__init__(methodName=methodName, algorithm='log1024')
+        super(CountMinSketchUpdateLog1024Test, self).__init__(methodName=methodName, log_counting=1024)
 
 
 class CountMinSketchUpdateLog8Test(CountMinSketchUpdateCommonTest):
     def __init__(self, methodName='runTest'):
-        super(CountMinSketchUpdateLog8Test, self).__init__(methodName=methodName, algorithm='log8')
+        super(CountMinSketchUpdateLog8Test, self).__init__(methodName=methodName, log_counting=8)
 
 
 def load_tests(loader, tests, pattern):
