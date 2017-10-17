@@ -245,7 +245,7 @@ CMS_VARIANT(_getitem)(CMS_TYPE *self, PyObject *args)
     }
 
     Py_XDECREF(free_after);
-    return Py_BuildValue("i", CMS_VARIANT(decode) (min_value));
+    return Py_BuildValue("L", CMS_VARIANT(decode) (min_value));
 }
 
 /* Retrieves estimate of the set cardinality */
@@ -253,14 +253,14 @@ static PyObject *
 CMS_VARIANT(_cardinality)(CMS_TYPE *self, PyObject *args)
 {
    double cardinality = HyperLogLog_cardinality(&self->hll);
-   return Py_BuildValue("i", (long long) cardinality);
+   return Py_BuildValue("L", (long long) cardinality);
 }
 
 /* Retrieves the total number of increments */
 static PyObject *
 CMS_VARIANT(_total)(CMS_TYPE *self, PyObject *args)
 {
-   return Py_BuildValue("i", self->total);
+   return Py_BuildValue("L", self->total);
 }
 
 static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value) (CMS_CELL_TYPE v1, CMS_CELL_TYPE v2, uint32_t merge_seed);
