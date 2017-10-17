@@ -55,7 +55,7 @@ In particular, Bounter implements three different algorithms under the hood, dep
   print(counts.cardinality())  # cardinality estimation. Output: 3L
   print(counts.total())  # Counts accumulated across all items. Output: 5L
   ```
-    
+
   This is the simplest use case and needs the least amount of memory, by using the [HyperLogLog algorithm](http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) (built on top of Joshua Andersen's [HLL](https://github.com/ascv/HyperLogLog) code).
 
 2. **Item frequencies: "How many times did this item appear?"**
@@ -70,14 +70,14 @@ In particular, Bounter implements three different algorithms under the hood, dep
   ```
 
   This uses the [Count-min Sketch algorithm](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) to estimate item counts efficiently, in a **fixed amount of memory**. See the [API docs](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py) for full details and parameters.
-  
+
 As a further optimization, Count-min Sketch optionally support a [logarithmic probabilistic counter](https://en.wikipedia.org/wiki/Approximate_counting_algorithm):
 
  - `bounter(need_iteration=False)`: default option. Exact counter, no probabilistic counting. Occupies 4 bytes (max value 2^32) per bucket.
  - `bounter(need_iteration=False, log_counting=1024)`: an integer counter that occupies 2 bytes. Values up to 2048 are exact; larger values are off by +/- 2%. The maximum representable value is around 2^71.
  - `bounter(need_iteration=False, log_counting=8)`: a more aggressive probabilistic counter that fits into just 1 byte. Values up to 8 are exact and larger values can be off by +/- 30%. The maximum representable value is about 2^33.
 
-Such memory vs. accuracy tradeoffs are sometimes desirable in NLP, where being able to handle very large collections is more important than whether an event occurs exactly 55,482x or 55,519x.  
+Such memory vs. accuracy tradeoffs are sometimes desirable in NLP, where being able to handle very large collections is more important than whether an event occurs exactly 55,482x or 55,519x.
 
 3. **Full item iteration: "What are the items and their frequencies?"**
 
@@ -90,7 +90,7 @@ Such memory vs. accuracy tradeoffs are sometimes desirable in NLP, where being a
   print(counts['a'])  # Item frequency works. Output: 2L
 
   print(list(counts)) # Iterator returns keys. Output: [u'b', u'a', u'c']
-  print(list(counts.items()))  # items() iterates over key-count pairs. Output: [(u'b', 2L), (u'a', 2L), (u'c', 1L)]  
+  print(list(counts.items()))  # items() iterates over key-count pairs. Output: [(u'b', 2L), (u'a', 2L), (u'c', 1L)]
   ```
 
   Also stores the keys (strings) themselves in addition to the total cardinality and individual item frequency. Uses the most memory, but supports the widest range of functionality.
@@ -119,23 +119,23 @@ The Wikipedia dataset contained 7,661,318 distinct words across 1,860,927,726 to
 
 To test the accuracy of Bounter, we automatically extracted [collocations](https://en.wikipedia.org/wiki/Collocation) (common multi-word expressions, such as "New York", "network license", "Supreme Court" or "elementary school") from these bigram counts.
 
-We compared the set of collocations extracted from Counter (exact counts, needs lots of memory) vs Bounter (approximate counts, bounded memory) using a random sample of 2000 bigrams and present the precision and recall here:
+We compared the set of collocations extracted from Counter (exact counts, needs lots of memory) vs Bounter (approximate counts, bounded memory) and present the precision and recall here:
 
 | Algorithm                         | Time to build | Memory  | Precision | Recall | F1 score
 |-----------------------------------|--------------:|--------:|----------:|-------:|---------:|
 | `Counter` (built-in)              |       32m 26s | 31 GB |      100% |   100% |     100% |
-| `bounter(size_mb=128, need_iteration=False, log_counting=8)` |         19m 53s |   128 MB | 95.02% | 97.10% | 96.04% |
+| `bounter(size_mb=128, need_iteration=False, log_counting=8)` |         19m 53s |   **128 MB** | 95.02% | 97.10% | 96.04% |
 | `bounter(size_mb=1024)`           |       17m 54s |    1 GB |     100% |  99.27% |   99.64% |
 | `bounter(size_mb=1024, need_iteration=False)` |     19m 58s |   1 GB |    0.9964% | 100% | 99.82% |
-| `bounter(size_mb=1024, need_iteration=False, log_counting=1024)` |         20m 05s |   1 GB | 100% | 100% | 100% |
+| `bounter(size_mb=1024, need_iteration=False, log_counting=1024)` |         20m 05s |   1 GB | 100% | 100% | **100%** |
 | `bounter(size_mb=1024, need_iteration=False, log_counting=8)` |         19m 59s |   1 GB | 97.45% | 97.45% | 97.45% |
 | `bounter(size_mb=4096)`           |       16m 21s |   4 GB |     100% |  100% |  100% |
 | `bounter(size_mb=4096, need_iteration=False)` |        20m 14s  |   4 GB|    100% | 100% | 100% |
 | `bounter(size_mb=4096, need_iteration=False, log_counting=1024)` |        20m 14s |   4 GB |    100% | 99.64% | 99.82% |
 
-Bounter achieves 100% F1 score at 31x less memory, compared to a built-in `Counter` or `dict`. It is also 81% faster.
+Bounter achieves a perfect F1 score of 100% at 31x less memory (1GB vs 31 GB), compared to a built-in `Counter` or `dict`. It is also 61% faster.
 
-Even with just 128 MB (250x less memory), its F1 score is still 96.04! 
+Even with just 128 MB (250x less memory), its F1 score is still 96.04%.
 
 # Support
 
