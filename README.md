@@ -127,21 +127,21 @@ The Wikipedia dataset contained 7,661,318 distinct words across 1,860,927,726 to
 
 To test the accuracy of Bounter, we automatically extracted [collocations](https://en.wikipedia.org/wiki/Collocation) (common multi-word expressions, such as "New York", "network license", "Supreme Court" or "elementary school") from these bigram counts.
 
-We compared the set of collocations extracted from Counter (exact counts, needs lots of memory) vs Bounter (approximate counts, bounded memory) and present the precision and recall here:
+We compared the set of collocations extracted from Counter (exact counts, needs lots of memory) vs Bounter (approximate counts, bounded memory) using a random sample of 2000 bigrams and present the precision and recall here:
 
 | Algorithm                         | Time to build | Memory  | Precision | Recall | F1 score
 |-----------------------------------|--------------:|--------:|----------:|-------:|---------:|
-| `Counter` (built-in)              |     FIXME 32m  | 31 GB |      100% |   100% |     100% |
-| `bounter(size_mb=128, need_iteration=False, log_counting=8)` |         18m 08s |   128 MB | 95.02% | 97.10% | 96.04% |
-| `bounter(size_mb=1024)`           |       13m 26s |    1 GB |     100% |  99.27% |   99.64% |
-| `bounter(size_mb=1024, need_iteration=False)` |     18m 38s |   1 GB |    0.9964% | 100% | 99.82% |
-| `bounter(size_mb=1024, need_iteration=False, log_counting=1024)` |         18m 01s |   1 GB | 100% | 100% | 100% |
-| `bounter(size_mb=1024, need_iteration=False, log_counting=8)` |         18m 40s |   1 GB | 97.45% | 97.45% | 97.45% |
-| `bounter(size_mb=4096)`           |       11m 57s |   4 GB |     100% |  100% |  100% |
-| `bounter(size_mb=4096, need_iteration=False)` |        21m 02s  |   4 GB|    100% | 100% | 100% |
-| `bounter(size_mb=4096, need_iteration=False, log_counting=1024)` |        21m 34s |   4 GB |    100% | 99.64% | 99.82% |
+| `Counter` (built-in)              |       32m 26s | 31 GB |      100% |   100% |     100% |
+| `bounter(size_mb=128, need_iteration=False, log_counting=8)` |         19m 53s |   128 MB | 95.02% | 97.10% | 96.04% |
+| `bounter(size_mb=1024)`           |       17m 54s |    1 GB |     100% |  99.27% |   99.64% |
+| `bounter(size_mb=1024, need_iteration=False)` |     19m 58s |   1 GB |    0.9964% | 100% | 99.82% |
+| `bounter(size_mb=1024, need_iteration=False, log_counting=1024)` |         20m 05s |   1 GB | 100% | 100% | 100% |
+| `bounter(size_mb=1024, need_iteration=False, log_counting=8)` |         19m 59s |   1 GB | 97.45% | 97.45% | 97.45% |
+| `bounter(size_mb=4096)`           |       16m 21s |   4 GB |     100% |  100% |  100% |
+| `bounter(size_mb=4096, need_iteration=False)` |        20m 14s  |   4 GB|    100% | 100% | 100% |
+| `bounter(size_mb=4096, need_iteration=False, log_counting=1024)` |        20m 14s |   4 GB |    100% | 99.64% | 99.82% |
 
-Bounter achieves 100% F1 score at 31x less memory, compared to a built-in `Counter` or `dict`. It is also FIXME % faster.
+Bounter achieves 100% F1 score at 31x less memory, compared to a built-in `Counter` or `dict`. It is also 81% faster.
 
 Even with just 128 MB (250x less memory), its F1 score is still 96.04! 
 
