@@ -20,7 +20,7 @@ print(counts[u'few'])  # query the counts
 
 However, unlike `dict` or `Counter`, Bounter can process huge collections where the items would not even fit in RAM. This commonly happens in Machine Learning and NLP, with tasks like **dictionary building** or **collocation detection** that need to estimate counts of billions of items (token ngrams) for their statistical scoring and subsequent filtering.
 
-Bounter implements approximative algorithms using optimized low-level C structures, to avoid the overhead of Python objects. It lets you specify the maximum amount of RAM you want to use. In the Wikipedia example below, Bounter uses 17x less memory compared to `Counter`.
+Bounter implements approximative algorithms using optimized low-level C structures, to avoid the overhead of Python objects. It lets you specify the maximum amount of RAM you want to use. In the Wikipedia example below, Bounter uses 31x less memory compared to `Counter`.
 
 Bounter is also marginally faster than the built-in `dict` and `Counter`, so wherever you can represent your **items as strings** (both byte-strings and unicode are fine, and Bounter works in both Python2 and Python3), there's no reason not to use Bounter instead.
 
@@ -122,7 +122,8 @@ with smart_open('wikipedia_tokens.txt.gz') as wiki:
         bigrams = zip(words, words[1:])
         counter.update(u' '.join(pair for pair in bigrams))
 
-print(counter[u'czech republic']) # Output: 42099
+print(counter[u'czech republic'])
+42099
 ```
 
 The Wikipedia dataset contained 7,661,318 distinct words across 1,860,927,726 total words, and 179,413,989 distinct bigrams across 1,857,420,106 total bigrams. Storing them in a naive built-in `dict` would consume over 31 GB RAM.
@@ -137,9 +138,9 @@ We compared the set of collocations extracted from Counter (exact counts, needs 
 | `bounter(size_mb=128, need_iteration=False, log_counting=8)` |         19m 53s |   **128 MB** | 95.02% | 97.10% | 96.04% |
 | `bounter(size_mb=1024)`           |       17m 54s |    1 GB |     100% |  99.27% |   99.64% |
 | `bounter(size_mb=1024, need_iteration=False)` |     19m 58s |   1 GB |    0.9964% | 100% | 99.82% |
-| `bounter(size_mb=1024, need_iteration=False, log_counting=1024)` |         20m 05s |   1 GB | 100% | 100% | **100%** |
+| `bounter(size_mb=1024, need_iteration=False, log_counting=1024)` |         20m 05s |   1 GB | **100%** | **100%** | **100%** |
 | `bounter(size_mb=1024, need_iteration=False, log_counting=8)` |         19m 59s |   1 GB | 97.45% | 97.45% | 97.45% |
-| `bounter(size_mb=4096)`           |       16m 21s |   4 GB |     100% |  100% |  100% |
+| `bounter(size_mb=4096)`           |       **16m 21s** |   4 GB |     100% |  100% |  100% |
 | `bounter(size_mb=4096, need_iteration=False)` |        20m 14s  |   4 GB|    100% | 100% | 100% |
 | `bounter(size_mb=4096, need_iteration=False, log_counting=1024)` |        20m 14s |   4 GB |    100% | 99.64% | 99.82% |
 
