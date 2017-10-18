@@ -7,7 +7,7 @@
 # This code is distributed under the terms and conditions
 # from the MIT License (MIT).
 
-__version__ = '1.0.0'
+__version__ = '1.0.1rc1'
 
 from .count_min_sketch import CountMinSketch
 from bounter_htc import HT_Basic as HashTable

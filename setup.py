@@ -7,7 +7,7 @@
 # This code is distributed under the terms and conditions
 # from the MIT License (MIT).
 
-import sys
+import sys, os, io
 
 if sys.version_info < (2, 7):
     raise ImportError("bounter requires python >= 2.7")
@@ -15,10 +15,19 @@ if sys.version_info < (2, 7):
 # TODO add ez_setup?
 from setuptools import setup, find_packages, Extension
 
+
+def read(fname):
+    name = os.path.join(os.path.dirname(__file__), fname)
+    if not os.path.isfile(name):
+        return ''
+    with io.open(name, encoding='utf-8') as readfile:
+        return readfile.read()
+
 setup(
     name='bounter',
-    version='1.0.0',
+    version='1.0.1rc1',
     description='Counter for large datasets',
+    long_description=read('README.rst'),
 
     headers=['cbounter/hll.h', 'cbounter/murmur3.h'],
     ext_modules=[
