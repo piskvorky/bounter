@@ -97,7 +97,7 @@ print(counts.total(), counts.cardinality())  # total and cardinality still work
 print(counts['a'])  # individual item frequency still works
 2
 
-print(list(counts)) # iterator returns keys, just like Counter
+print(list(counts))  # iterator returns keys, just like Counter
 [u'b', u'a', u'c']
 print(list(counts.iteritems()))  # supports iterating over key-count pairs, etc.
 [(u'b', 2L), (u'a', 2L), (u'c', 1L)]
@@ -120,7 +120,7 @@ with smart_open('wikipedia_tokens.txt.gz') as wiki:
     for line in wiki:
         words = line.decode().split()
         bigrams = zip(words, words[1:])
-        counter.update(u' '.join(pair for pair in bigrams))
+        counter.update(u' '.join(pair) for pair in bigrams)
 
 print(counter[u'czech republic'])
 42099
@@ -132,17 +132,17 @@ To test the accuracy of Bounter, we automatically extracted [collocations](https
 
 We compared the set of collocations extracted from Counter (exact counts, needs lots of memory) vs Bounter (approximate counts, bounded memory) and present the precision and recall here:
 
-| Algorithm                         | Time to build | Memory  | Precision | Recall | F1 score
-|-----------------------------------|--------------:|--------:|----------:|-------:|---------:|
-| `Counter` (built-in)              |       32m 26s | 31 GB |      100% |   100% |     100% |
-| `bounter(size_mb=128, need_iteration=False, log_counting=8)` |         19m 53s |   **128 MB** | 95.02% | 97.10% | 96.04% |
-| `bounter(size_mb=1024)`           |       17m 54s |    1 GB |     100% |  99.27% |   99.64% |
-| `bounter(size_mb=1024, need_iteration=False)` |     19m 58s |   1 GB |    0.9964% | 100% | 99.82% |
-| `bounter(size_mb=1024, need_iteration=False, log_counting=1024)` |         20m 05s |   1 GB | **100%** | **100%** | **100%** |
-| `bounter(size_mb=1024, need_iteration=False, log_counting=8)` |         19m 59s |   1 GB | 97.45% | 97.45% | 97.45% |
-| `bounter(size_mb=4096)`           |       **16m 21s** |   4 GB |     100% |  100% |  100% |
-| `bounter(size_mb=4096, need_iteration=False)` |        20m 14s  |   4 GB|    100% | 100% | 100% |
-| `bounter(size_mb=4096, need_iteration=False, log_counting=1024)` |        20m 14s |   4 GB |    100% | 99.64% | 99.82% |
+| Algorithm                                                        | Time to build |    Memory  | Precision |   Recall | F1 score |
+|------------------------------------------------------------------|--------------:|-----------:|----------:|---------:|---------:|
+| `Counter` (built-in)                                             |       32m 26s |      31 GB |      100% |     100% |     100% |
+| `bounter(size_mb=128, need_iteration=False, log_counting=8)`     |       19m 53s | **128 MB** |    95.02% |   97.10% |   96.04% |
+| `bounter(size_mb=1024)`                                          |       17m 54s |       1 GB |      100% |   99.27% |   99.64% |
+| `bounter(size_mb=1024, need_iteration=False)`                    |       19m 58s |       1 GB |    99.64% |     100% |   99.82% |
+| `bounter(size_mb=1024, need_iteration=False, log_counting=1024)` |       20m 05s |       1 GB |  **100%** | **100%** | **100%** |
+| `bounter(size_mb=1024, need_iteration=False, log_counting=8)`    |       19m 59s |       1 GB |    97.45% |   97.45% |   97.45% |
+| `bounter(size_mb=4096)`                                          |   **16m 21s** |       4 GB |      100% |     100% |     100% |
+| `bounter(size_mb=4096, need_iteration=False)`                    |      20m 14s  |       4 GB |      100% |     100% |     100% |
+| `bounter(size_mb=4096, need_iteration=False, log_counting=1024)` |       20m 14s |       4 GB |      100% |   99.64% |   99.82% |
 
 Bounter achieves a perfect F1 score of 100% at 31x less memory (1GB vs 31GB), compared to a built-in `Counter` or `dict`. It is also 61% faster.
 
