@@ -245,12 +245,13 @@ Copyright (c) 2017 `RaRe
 Technologies <https://rare-technologies.com/>`__
 
 .. |Build Status| image:: https://travis-ci.org/RaRe-Technologies/bounter.svg?branch=master
-:target: https://travis-ci.org/RaRe-Technologies/bounter
+   :target: https://travis-ci.org/RaRe-Technologies/bounter
 .. |GitHub release| image:: https://img.shields.io/github/release/rare-technologies/bounter.svg?maxAge=3600
-:target: https://github.com/RaRe-Technologies/bounter/releases
+   :target: https://github.com/RaRe-Technologies/bounter/releases
 .. |Mailing List| image:: https://img.shields.io/badge/-Mailing%20List-lightgrey.svg
-:target: https://groups.google.com/forum/#!forum/gensim
+   :target: https://groups.google.com/forum/#!forum/gensim
 .. |Gitter| image:: https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-09a3d5.svg
-:target: https://gitter.im/RaRe-Technologies/gensim
+   :target: https://gitter.im/RaRe-Technologies/gensim
 .. |Follow| image:: https://img.shields.io/twitter/follow/spacy_io.svg?style=social&label=Follow
-:target: https://twitter.com/gensim_py
+   :target: https://twitter.com/gensim_py
+
