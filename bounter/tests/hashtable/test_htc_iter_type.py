@@ -12,7 +12,10 @@ import sys
 
 from bounter import HashTable
 
-uni_type = str if sys.version_info >= (3, 0) else unicode
+try:
+    uni_type = unicode
+except NameError:
+    uni_type = str
 
 class HashTableIterTypeTest(unittest.TestCase):
     """
