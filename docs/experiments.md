@@ -101,7 +101,7 @@ these counts efficiently (but without compression), we would need approximately 
 
 Python Counter (dict) uses approximately 800 MB to store this set in RAM.
 
-![Precision on unigrams data](docs/bounter_unigrams_wiki.png)
+![Precision on unigrams data](bounter_unigrams_wiki.png)
 
 #### Bigrams
 The Wikipedia data set contains 179,413,989 distinct bigrams in 1,857,420,106 total bigrams.
@@ -121,7 +121,7 @@ Storing them all in a single Python counter would require approximately 17.2 GB 
 | CMS log8         |      1001s  |       1219s |       1103s |
 
 
-![Precision on bigrams data](docs/bounter_bigrams_wiki.png)
+![Precision on bigrams data](bounter_bigrams_wiki.png)
 
 We used words collocations to distinguish phrases using our collected data. As a reference,
 we calculated whether bigram is a phrase using reference exact counts on a set of 2000 randomly
