@@ -113,7 +113,7 @@ print(list(counts.iteritems()))  # supports iterating over key-count pairs, etc.
 
 ----
 
-For more details, see the [API docstrings](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py).
+For more details, see the [API docstrings](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py) or read the [blog](https://rare-technologies.com/counting-efficiently-with-bounter-pt-1-hashtable/).
 
 ## Example on the English Wikipedia
 
