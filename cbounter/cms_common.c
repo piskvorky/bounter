@@ -62,7 +62,7 @@ CMS_VARIANT(_init)(CMS_TYPE *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"width", "depth", NULL};
 
     uint32_t w;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "ii", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "II", kwlist,
 				      &w, &self->depth)) {
         return -1;
     }
@@ -378,7 +378,7 @@ CMS_VARIANT(_update)(CMS_TYPE * self, PyObject *args)
 static PyObject *
 CMS_VARIANT(_reduce)(CMS_TYPE *self)
 {
-    PyObject *args = Py_BuildValue("(ii)", self->width, self->depth);
+    PyObject *args = Py_BuildValue("(II)", self->width, self->depth);
     PyObject *state_table = PyList_New(self->depth + 2);
     int i;
     for (i = 0; i < self->depth; i++)
