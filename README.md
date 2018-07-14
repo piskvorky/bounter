@@ -1,6 +1,10 @@
 # Bounter -- Counter for large datasets
 
-[![Build Status](https://travis-ci.org/RaRe-Technologies/bounter.svg?branch=master)](https://travis-ci.org/RaRe-Technologies/bounter)[![GitHub release](https://img.shields.io/github/release/rare-technologies/bounter.svg?maxAge=3600)](https://github.com/RaRe-Technologies/bounter/releases)[![Mailing List](https://img.shields.io/badge/-Mailing%20List-lightgrey.svg)](https://groups.google.com/forum/#!forum/gensim)[![Gitter](https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-09a3d5.svg)](https://gitter.im/RaRe-Technologies/gensim)[![Follow](https://img.shields.io/twitter/follow/spacy_io.svg?style=social&label=Follow)](https://twitter.com/gensim_py)
+[![Build Status](https://travis-ci.org/RaRe-Technologies/bounter.svg?branch=master)](https://travis-ci.org/RaRe-Technologies/bounter)
+[![GitHub release](https://img.shields.io/github/release/rare-technologies/bounter.svg?maxAge=3600)](https://github.com/RaRe-Technologies/bounter/releases)
+[![Mailing List](https://img.shields.io/badge/-Mailing%20List-lightgrey.svg)](https://groups.google.com/forum/#!forum/gensim)
+[![Gitter](https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-09a3d5.svg)](https://gitter.im/RaRe-Technologies/gensim)
+[![Follow](https://img.shields.io/twitter/follow/gensim_py.svg?style=social&label=Follow)](https://twitter.com/gensim_py)
 
 Bounter is a Python library, written in C, for extremely fast probabilistic counting of item frequencies in massive datasets. Unlike `Counter`, it uses only a small fixed memory footprint.
 
@@ -109,7 +113,7 @@ print(list(counts.iteritems()))  # supports iterating over key-count pairs, etc.
 
 ----
 
-For more details, see the [API docstrings](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py).
+For more details, see the [API docstrings](https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py) or read the [blog](https://rare-technologies.com/counting-efficiently-with-bounter-pt-1-hashtable/).
 
 ## Example on the English Wikipedia
 
