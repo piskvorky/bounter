@@ -38,7 +38,23 @@ below, Bounter uses 31x less memory compared to ``Counter``.
 Bounter is also marginally faster than the built-in ``dict`` and
 ``Counter``, so wherever you can represent your **items as strings**
 (both byte-strings and unicode are fine, and Bounter works in both
-Python2 and Python3), there's no reason not to use Bounter instead.
+Python2 and Python3), there's no reason not to use Bounter instead except:
+
+When not to use Bounter?
+------------------------
+
+Beware, Bounter is only a probabilistic frequency counter and cannot be relied on for fine counting. (You can't expect a data structure with finite size to hold infinite data.)
+Example of Bounter failing:
+
+.. code:: python
+
+    from bounter import bounter
+    bounts = bounter(size_mb=1)
+    bounts.update(str(i) for i in range(1000000))
+    bounts['100']
+    0
+
+Please use ``Counter`` or ``dict`` when such fine counts matter. When they don't matter, like in most NLP applications with a huge corpora, Bounter is a very good alternative.
 
 Installation
 ------------
