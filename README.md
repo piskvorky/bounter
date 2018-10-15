@@ -30,18 +30,18 @@ Bounter is also marginally faster than the built-in `dict` and `Counter`, so whe
 
 
 ## When not to use Bounter?
-Beware, Bounter is only a probabilistic frequency counter and cannot be relied on for fine counting. (You can't expect a data structure with finite size to hold infinite data.)
+Beware, Bounter is only a probabilistic frequency counter and cannot be relied on for exact counting. (You can't expect a data structure with finite size to hold infinite data.)
 Example of Bounter failing:
 
 ```python
 from bounter import bounter
 bounts = bounter(size_mb=1)
-bounts.update(str(i) for i in range(1000000))
+bounts.update(str(i) for i in range(10000000))
 bounts['100']
 0
 ```
 
-Please use `Counter` or `dict` when such fine counts matter. When they don't matter, like in most NLP applications with a huge corpora, Bounter is a very good alternative.
+Please use `Counter` or `dict` when such exact counts matter. When they don't matter, like in most NLP and ML applications with a huge datasets, Bounter is a very good alternative.
 
 ## Installation
 
