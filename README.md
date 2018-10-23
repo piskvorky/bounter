@@ -41,7 +41,7 @@ bounts['100']
 0
 ```
 
-Please use `Counter` or `dict` when such exact counts matter. When they don't matter, like in most NLP and ML applications with a huge datasets, Bounter is a very good alternative.
+Please use `Counter` or `dict` when such exact counts matter. When they don't matter, like in most NLP and ML applications with huge datasets, Bounter is a very good alternative.
 
 ## Installation
 
