@@ -1,7 +1,7 @@
 Bounter -- Counter for large datasets
 =====================================
 
-|Build Status| |GitHub release| |Mailing List| |Gitter| |Follow|
+|Build Status|\ |GitHub release|\ |Mailing List|\ |Gitter|\ |Follow|
 
 Bounter is a Python library, written in C, for extremely fast
 probabilistic counting of item frequencies in massive datasets, using
@@ -89,96 +89,94 @@ hood, depending on what type of "counting" you need:
    estimation <https://en.wikipedia.org/wiki/Count-distinct_problem>`__:
    "How many unique items are there?"**
 
-.. code:: python
+   .. code:: python
 
-    from bounter import bounter
+       from bounter import bounter
 
-    counts = bounter(need_counts=False)
-    counts.update(['a', 'b', 'c', 'a', 'b'])
+       counts = bounter(need_counts=False)
+       counts.update(['a', 'b', 'c', 'a', 'b'])
 
-    print(counts.cardinality())  # cardinality estimation
-    3
-    print(counts.total())  # efficiently accumulates counts across all items
-    5
+       print(counts.cardinality())  # cardinality estimation
+       3
+       print(counts.total())  # efficiently accumulates counts across all items
+       5
 
-This is the simplest use case and needs the least amount of memory, by
-using the `HyperLogLog
-algorithm <http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf>`__
-(built on top of Joshua Andersen's
-`HLL <https://github.com/ascv/HyperLogLog>`__ code).
+   This is the simplest use case and needs the least amount of memory, by
+   using the `HyperLogLog
+   algorithm <http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf>`__
+   (built on top of Joshua Andersen's
+   `HLL <https://github.com/ascv/HyperLogLog>`__ code).
 
 2. **Item frequencies: "How many times did this item appear?"**
 
-.. code:: python
+   .. code:: python
 
-    from bounter import bounter
+       from bounter import bounter
 
-    counts = bounter(need_iteration=False, size_mb=200)
-    counts.update(['a', 'b', 'c', 'a', 'b'])
-    print(counts.total(), counts.cardinality())  # total and cardinality still work
-    (5L, 3L)
+       counts = bounter(need_iteration=False, size_mb=200)
+       counts.update(['a', 'b', 'c', 'a', 'b'])
+       print(counts.total(), counts.cardinality())  # total and cardinality still work
+       (5L, 3L)
 
-    print(counts['a'])  # supports asking for counts of individual items
-    2
+       print(counts['a'])  # supports asking for counts of individual items
+       2
 
-This uses the `Count-min Sketch
-algorithm <https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch>`__ to
-estimate item counts efficiently, in a **fixed amount of memory**. See
-the `API
-docs <https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py>`__
-for full details and parameters.
+   This uses the `Count-min Sketch
+   algorithm <https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch>`__ to
+   estimate item counts efficiently, in a **fixed amount of memory**. See
+   the `API
+   docs <https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py>`__
+   for full details and parameters.
 
-As a further optimization, Count-min Sketch optionally support a
-`logarithmic probabilistic
-counter <https://en.wikipedia.org/wiki/Approximate_counting_algorithm>`__:
+   As a further optimization, Count-min Sketch optionally support a
+   `logarithmic probabilistic
+   counter <https://en.wikipedia.org/wiki/Approximate_counting_algorithm>`__:
 
--  ``bounter(need_iteration=False)``: default option. Exact counter, no
-   probabilistic counting. Occupies 4 bytes (max value 2^32) per bucket.
--  ``bounter(need_iteration=False, log_counting=1024)``: an integer
-   counter that occupies 2 bytes. Values up to 2048 are exact; larger
-   values are off by +/- 2%. The maximum representable value is around
-   2^71.
--  ``bounter(need_iteration=False, log_counting=8)``: a more aggressive
-   probabilistic counter that fits into just 1 byte. Values up to 8 are
-   exact and larger values can be off by +/- 30%. The maximum
-   representable value is about 2^33.
+   -  ``bounter(need_iteration=False)``: default option. Exact counter, no
+      probabilistic counting. Occupies 4 bytes (max value 2^32) per bucket.
+   -  ``bounter(need_iteration=False, log_counting=1024)``: an integer
+      counter that occupies 2 bytes. Values up to 2048 are exact; larger
+      values are off by +/- 2%. The maximum representable value is around
+      2^71.
+   -  ``bounter(need_iteration=False, log_counting=8)``: a more aggressive
+      probabilistic counter that fits into just 1 byte. Values up to 8 are
+      exact and larger values can be off by +/- 30%. The maximum
+      representable value is about 2^33.
 
-Such memory vs. accuracy tradeoffs are sometimes desirable in NLP, where
-being able to handle very large collections is more important than
-whether an event occurs exactly 55,482x or 55,519x.
+   Such memory vs. accuracy tradeoffs are sometimes desirable in NLP, where
+   being able to handle very large collections is more important than
+   whether an event occurs exactly 55,482x or 55,519x.
 
 3. **Full item iteration: "What are the items and their frequencies?"**
 
-.. code:: python
+   .. code:: python
 
-    from bounter import bounter
+       from bounter import bounter
 
-    counts = bounter(size_mb=200)  # default version, unless you specify need_items or need_counts
-    counts.update(['a', 'b', 'c', 'a', 'b'])
-    print(counts.total(), counts.cardinality())  # total and cardinality still work
-    (5L, 3)
-    print(counts['a'])  # individual item frequency still works
-    2
+       counts = bounter(size_mb=200)  # default version, unless you specify need_items or need_counts
+       counts.update(['a', 'b', 'c', 'a', 'b'])
+       print(counts.total(), counts.cardinality())  # total and cardinality still work
+       (5L, 3)
+       print(counts['a'])  # individual item frequency still works
+       2
 
-    print(list(counts))  # iterator returns keys, just like Counter
-    [u'b', u'a', u'c']
-    print(list(counts.iteritems()))  # supports iterating over key-count pairs, etc.
-    [(u'b', 2L), (u'a', 2L), (u'c', 1L)]
+       print(list(counts))  # iterator returns keys, just like Counter
+       [u'b', u'a', u'c']
+       print(list(counts.iteritems()))  # supports iterating over key-count pairs, etc.
+       [(u'b', 2L), (u'a', 2L), (u'c', 1L)]
 
-Stores the keys (strings) themselves in addition to the total
-cardinality and individual item frequency (8 bytes). Uses the most
-memory, but supports the widest range of functionality.
+   Stores the keys (strings) themselves in addition to the total
+   cardinality and individual item frequency (8 bytes). Uses the most
+   memory, but supports the widest range of functionality.
 
-This option uses a custom C hash table underneath, with optimized string
-storage. It will remove its low-count objects when nearing the maximum
-alotted memory, instead of expanding the table.
+   This option uses a custom C hash table underneath, with optimized string
+   storage. It will remove its low-count objects when nearing the maximum
+   alotted memory, instead of expanding the table.
 
 --------------
 
 For more details, see the `API
-docstrings <https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py>`__
-or read the
-`blog <https://rare-technologies.com/counting-efficiently-with-bounter-pt-1-hashtable/>`__.
+docstrings <https://github.com/RaRe-Technologies/bounter/blob/master/bounter/bounter.py>`__.
 
 Example on the English Wikipedia
 --------------------------------
@@ -211,35 +209,35 @@ We compared the set of collocations extracted from Counter (exact
 counts, needs lots of memory) vs Bounter (approximate counts, bounded
 memory) and present the precision and recall here:
 
-+---------------------------------------+----------+---------+--------+--------+--------+
-| Algorithm                             | Time to  | Memory  | Precis | Recall | F1     |
-|                                       | build    |         | ion    |        | score  |
-+=======================================+==========+=========+========+========+========+
-| ``Counter`` (built-in)                | 32m 26s  | 31 GB   | 100%   | 100%   | 100%   |
-+---------------------------------------+----------+---------+--------+--------+--------+
-| ``bounter(size_mb=128, need_iteration | 19m 53s  | **128   | 95.02% | 97.10% | 96.04% |
-| =False, log_counting=8)``             |          | MB**    |        |        |        |
-+---------------------------------------+----------+---------+--------+--------+--------+
-| ``bounter(size_mb=1024)``             | 17m 54s  | 1 GB    | 100%   | 99.27% | 99.64% |
-+---------------------------------------+----------+---------+--------+--------+--------+
-| ``bounter(size_mb=1024, need_iteratio | 19m 58s  | 1 GB    | 99.64% | 100%   | 99.82% |
-| n=False)``                            |          |         |        |        |        |
-+---------------------------------------+----------+---------+--------+--------+--------+
-| ``bounter(size_mb=1024, need_iteratio | 20m 05s  | 1 GB    | **100% | **100% | **100% |
-| n=False, log_counting=1024)``         |          |         | **     | **     | **     |
-+---------------------------------------+----------+---------+--------+--------+--------+
-| ``bounter(size_mb=1024, need_iteratio | 19m 59s  | 1 GB    | 97.45% | 97.45% | 97.45% |
-| n=False, log_counting=8)``            |          |         |        |        |        |
-+---------------------------------------+----------+---------+--------+--------+--------+
-| ``bounter(size_mb=4096)``             | **16m    | 4 GB    | 100%   | 100%   | 100%   |
-|                                       | 21s**    |         |        |        |        |
-+---------------------------------------+----------+---------+--------+--------+--------+
-| ``bounter(size_mb=4096, need_iteratio | 20m 14s  | 4 GB    | 100%   | 100%   | 100%   |
-| n=False)``                            |          |         |        |        |        |
-+---------------------------------------+----------+---------+--------+--------+--------+
-| ``bounter(size_mb=4096, need_iteratio | 20m 14s  | 4 GB    | 100%   | 99.64% | 99.82% |
-| n=False, log_counting=1024)``         |          |         |        |        |        |
-+---------------------------------------+----------+---------+--------+--------+--------+
++----------------------------------------------+----------+---------+-----------+----------+----------+
+| Algorithm                                    | Time to  | Memory  | Precision |   Recall | F1 score |
+|                                              | build    |         |           |          |          |
++==============================================+==========+=========+===========+==========+==========+
+| ``Counter`` (built-in)                       | 32m 26s  | 31 GB   | 100%      |   100%   |   100%   |
++----------------------------------------------+----------+---------+-----------+----------+----------+
+| ``bounter(size_mb=128, need_iteration=False, | 19m 53s  | **128   | 95.02%    |   97.10% |   96.04% |
+| log_counting=8)``                            |          | MB**    |           |          |          |
++----------------------------------------------+----------+---------+-----------+----------+----------+
+| ``bounter(size_mb=1024)``                    | 17m 54s  | 1 GB    | 100%      | 99.27%   |   99.64% |
++----------------------------------------------+----------+---------+-----------+----------+----------+
+| ``bounter(size_mb=1024,                      | 19m 58s  | 1 GB    |    99.64% |   100%   |   99.82% |
+| need_iteration=False)``                      |          |         |           |          |          |
++----------------------------------------------+----------+---------+-----------+----------+----------+
+| ``bounter(size_mb=1024,                      | 20m 05s  | 1 GB    |  **100%** | **100%** | **100%** |
+| need_iteration=False, log_counting=1024)``   |          |         |           |          |          |
++----------------------------------------------+----------+---------+-----------+----------+----------+
+| ``bounter(size_mb=1024,                      | 19m 59s  | 1 GB    |    97.45% |   97.45% |   97.45% |
+| need_iteration=False, log_counting=8)``      |          |         |           |          |          |
++----------------------------------------------+----------+---------+-----------+----------+----------+
+| ``bounter(size_mb=4096)``                    | **16m    | 4 GB    | 100%      |   100%   |   100%   |
+|                                              | 21s**    |         |           |          |          |
++----------------------------------------------+----------+---------+-----------+----------+----------+
+| ``bounter(size_mb=4096,                      | 20m 14s  | 4 GB    | 100%      |   100%   |   100%   |
+| need_iteration=False)``                      |          |         |           |          |          |
++----------------------------------------------+----------+---------+-----------+----------+----------+
+| ``bounter(size_mb=4096,                      | 20m 14s  | 4 GB    | 100%      |   99.64% |   99.82% |
+| need_iteration=False, log_counting=1024)``   |          |         |           |          |          |
++----------------------------------------------+----------+---------+-----------+----------+----------+
 
 Bounter achieves a perfect F1 score of 100% at 31x less memory (1GB vs
 31GB), compared to a built-in ``Counter`` or ``dict``. It is also 61%
@@ -272,5 +270,5 @@ Technologies <https://rare-technologies.com/>`__
    :target: https://groups.google.com/forum/#!forum/gensim
 .. |Gitter| image:: https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-09a3d5.svg
    :target: https://gitter.im/RaRe-Technologies/gensim
-.. |Follow| image:: https://img.shields.io/twitter/follow/gensim_py.svg?style=social&label=Follow
+.. |Follow| image:: https://img.shields.io/twitter/follow/spacy_io.svg?style=social&label=Follow
    :target: https://twitter.com/gensim_py
