@@ -128,6 +128,9 @@ class CountMinSketch(object):
     def __getitem__(self, key):
         return self.cms.get(key)
 
+    def __contains__(self, item):
+        return self.cms.get(item)
+
     def cardinality(self):
         """
         Return an estimate for the number of distinct keys counted by the structure. The estimate should be within 1%.
