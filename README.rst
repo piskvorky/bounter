@@ -272,3 +272,4 @@ Technologies <https://rare-technologies.com/>`__
    :target: https://gitter.im/RaRe-Technologies/gensim
 .. |Follow| image:: https://img.shields.io/twitter/follow/spacy_io.svg?style=social&label=Follow
    :target: https://twitter.com/gensim_py
+
