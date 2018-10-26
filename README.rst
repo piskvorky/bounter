@@ -270,6 +270,6 @@ Technologies <https://rare-technologies.com/>`__
    :target: https://groups.google.com/forum/#!forum/gensim
 .. |Gitter| image:: https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-09a3d5.svg
    :target: https://gitter.im/RaRe-Technologies/gensim
-.. |Follow| image:: https://img.shields.io/twitter/follow/spacy_io.svg?style=social&label=Follow
+.. |Follow| image:: https://img.shields.io/twitter/follow/gensim_py.svg?style=social&label=Follow
    :target: https://twitter.com/gensim_py
 
