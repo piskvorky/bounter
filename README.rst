@@ -38,7 +38,25 @@ below, Bounter uses 31x less memory compared to ``Counter``.
 Bounter is also marginally faster than the built-in ``dict`` and
 ``Counter``, so wherever you can represent your **items as strings**
 (both byte-strings and unicode are fine, and Bounter works in both
-Python2 and Python3), there's no reason not to use Bounter instead.
+Python2 and Python3), there's no reason not to use Bounter instead
+except:
+
+When not to use Bounter?
+------------------------
+
+Beware, Bounter is only a probabilistic frequency counter and cannot be
+relied on for exact counting. (You can't expect a data structure with
+finite size to hold infinite data.) Example of Bounter failing:
+
+.. code:: python
+
+    from bounter import bounter
+    bounts = bounter(size_mb=1)
+    bounts.update(str(i) for i in range(10000000))
+    bounts['100']
+    0
+
+Please use ``Counter`` or ``dict`` when such exact counts matter. When they don't matter, like in most NLP and ML applications with huge datasets, Bounter is a very good alternative.
 
 Installation
 ------------
@@ -252,6 +270,6 @@ Technologies <https://rare-technologies.com/>`__
    :target: https://groups.google.com/forum/#!forum/gensim
 .. |Gitter| image:: https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-09a3d5.svg
    :target: https://gitter.im/RaRe-Technologies/gensim
-.. |Follow| image:: https://img.shields.io/twitter/follow/spacy_io.svg?style=social&label=Follow
+.. |Follow| image:: https://img.shields.io/twitter/follow/gensim_py.svg?style=social&label=Follow
    :target: https://twitter.com/gensim_py
 
