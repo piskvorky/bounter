@@ -1,10 +1,17 @@
 Changes
 ===========
 
+## 1.1.0, 2019-01-17
+* Add `__contains__` to `CountMinSketch` (__[@isamaru](https://github.com/isamaru)__, [#38](https://github.com/RaRe-Technologies/bounter/pull/38))
+* Use unsigned integers to address cms table (__[@tjbookreader](https://github.com/tjbookreader)__, [#35](https://github.com/RaRe-Technologies/bounter/pull/35))
+* Document limitations of Bounter (__[@aneesh-joshi](https://github.com/aneesh-joshi)__, [#37](https://github.com/RaRe-Technologies/bounter/pull/37))
+* Add blogpost link to `README.md` (__[@aneesh-joshi](https://github.com/aneesh-joshi)__, [#31](https://github.com/RaRe-Technologies/bounter/pull/31))
+* Fix incorrect image link in `experiments.md` (__[@aneesh-joshi](https://github.com/aneesh-joshi)__, [#29](https://github.com/RaRe-Technologies/bounter/pull/29))
+* Update twitter badge (__[@menshikh-iv](https://github.com/menshikh-iv)__, [c42dd6](https://github.com/RaRe-Technologies/bounter/commit/c42dd699db54e7e540c182aea74bffb2f36d09bd))
+* Fix rst indents (__[@isamaru](https://github.com/isamaru)__, [#26](https://github.com/RaRe-Technologies/bounter/pull/26))
+* Swap row labels for `log8` and `log1024` in documentation (__[@isamaru](https://github.com/isamaru)__, [#28](https://github.com/RaRe-Technologies/bounter/pull/28))
+
 ## 1.0.1, 2017-10-17
-
-:star2: Release version:
-
 * single unified bounter API for easy initialization, including the new "layered" functionality approach
 * simple CardinalityCounter to support Layer 1 
 * selecting iteration 
