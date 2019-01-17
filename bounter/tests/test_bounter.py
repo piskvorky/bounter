@@ -64,8 +64,8 @@ class BounterInitTest(unittest.TestCase):
     def test_contains(self):
         counter = bounter(size_mb=16)
         counter.update([u'foo', u'bar', u'foo'])
-        self.assertEqual('foo' in counter, True)
-        self.assertEqual('foobar' in counter, False)
+        self.assertTrue('foo' in counter)
+        self.assertFalse('foobar' in counter)
 
     def test_sanity_nocount(self):
         counter = bounter(need_counts=False)
