@@ -107,13 +107,7 @@ class CountMinSketchInitTest(unittest.TestCase):
             CountMinSketch(width=2 ** 22 - 1, depth=8)  # width must be a power of 2!
 
     def test_largest_cms(self):
-        cms = None
-        try:
-            cms = CountMinSketch(size_mb=16384, log_counting=8)
-        except OverflowError as err:
-            print("Caught an overflow error: {0}".format(err))
-
-        self.assertIsInstance(cms, CountMinSketch)
+        cms = CountMinSketch(size_mb=16384, log_counting=8)
 
 
 if __name__ == '__main__':
