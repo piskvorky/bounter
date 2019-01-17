@@ -106,6 +106,9 @@ class CountMinSketchInitTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             CountMinSketch(width=2 ** 22 - 1, depth=8)  # width must be a power of 2!
 
+    def test_largest_cms(self):
+        cms = CountMinSketch(size_mb=16384, log_counting=8)
+
 
 if __name__ == '__main__':
     unittest.main()
