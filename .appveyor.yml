@@ -8,29 +8,9 @@ environment:
   global:
       WITH_COMPILER: "cmd /E:ON /V:ON /C .\\appveyor\\windows_sdk.cmd"
   PYPI_PASSWORD:
-    secure: 1111
+    secure: put-it-here
 
   matrix:
-      - PYTHON: "C:\\Python27-x64"
-        PYTHON_VERSION: "2.7.x"
-        ARCH: "64"
-        PLAT_NAME: "win-amd64"
-        PY_TAG: "cp27"
-
-      - PYTHON: "C:\\Python35-x64"
-        PYTHON_VERSION: "3.5.x"
-        ARCH: "64"
-        WINDOWS_SDK_VERSION: "v7.1"
-        PLAT_NAME: "win-amd64"
-        PY_TAG: "cp35"
-
-      - PYTHON: "C:\\Python36-x64"
-        PYTHON_VERSION: "3.6.x"
-        ARCH: "64"
-        WINDOWS_SDK_VERSION: "v7.1"
-        PLAT_NAME: "win-amd64"
-        PY_TAG: "cp36"
-
       - PYTHON: "C:\\Python37-x64"
         PYTHON_VERSION: "3.7.x"
         ARCH: "64"
@@ -55,16 +35,16 @@ install:
   - pip install wheel twine six pytest
   - pip install numpy
 
-  # Now install spiceypy
-  - IF "%ARCH%"=="32" (call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x86) ELSE (ECHO "probably a 64bit build")
-  - IF "%ARCH%"=="64" (call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" amd64) ELSE (ECHO "probably a 32bit build")
+  # Now install
+  - IF "%ARCH%"=="32" (call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x86) ELSE (ECHO "64bit build")
+  - IF "%ARCH%"=="64" (call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" amd64) ELSE (ECHO "32bit build")
   - "%PYTHON%/python setup.py install"
 
-  - ECHO "Installed SpiceyPy!"
+  - ECHO "Installed!"
   - "%PYTHON%/Scripts/py.test --version"
 
 test_script:
-  - "%PYTHON%/Scripts/py.test spiceypy/tests"
+  - "%PYTHON%/Scripts/py.test bounter/tests"
 
 after_test:
   - ECHO "DONE!"
