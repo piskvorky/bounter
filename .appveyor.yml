@@ -10,8 +10,10 @@ environment:
   matrix:
   - PYTHON: 27
   - PYTHON: 36
+  - PYTHON: 37
   - CONDA: 27
   - CONDA: 36
+  - CONDA: 37
 install:
 - cmd: '"%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" %PLATFORM%'
 - ps: |
@@ -31,11 +33,10 @@ install:
 build_script:
 - ps: |
     if ($env:PYTHON) {
-      python setup.py sdist
-      pip install --verbose dist\python_example-0.0.1.tar.gz
+	  python setup.py sdist bdist_wheel      
     } else {
       conda build conda.recipe
-      conda install --use-local python_example
+      conda install --use-local bounter
     }
 test_script:
-- ps: python tests\test.py
+- ps: python bounter\tests\test_bounter.py
