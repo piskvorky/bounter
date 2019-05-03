@@ -33,7 +33,7 @@ install:
 build_script:
 - ps: |
     if ($env:PYTHON) {
-	  python setup.py sdist bdist_wheel      
+      python setup.py sdist bdist_wheel      
     } else {
       conda build conda.recipe
       conda install --use-local bounter
