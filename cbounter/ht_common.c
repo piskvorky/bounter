@@ -595,9 +595,9 @@ HT_VARIANT(_reduce)(HT_TYPE *self)
 
     PyObject * hll_row = PyByteArray_FromStringAndSize(self->hll.registers, self->hll.size);
 
-    PyObject *state = Py_BuildValue("(LLILOOOO)",
+    PyObject *state = Py_BuildValue("(LLILNNNN)",
         self->total, self->str_allocated, self->size, self->max_prune, hashtable_list, strings_row, histo_row, hll_row);
-    return Py_BuildValue("(OOO)", Py_TYPE(self), args, state);
+    return Py_BuildValue("(ONN)", Py_TYPE(self), args, state);
 }
 
 /* De-serialization function for pickling. */
