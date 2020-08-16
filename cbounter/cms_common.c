@@ -393,7 +393,7 @@ CMS_VARIANT(_reduce)(CMS_TYPE *self)
         return NULL;
     PyList_SetItem(state_table, self->depth, hll);
     PyList_SetItem(state_table, self->depth + 1, Py_BuildValue("i", self->total));
-    return Py_BuildValue("(OOO)", Py_TYPE(self), args, state_table);
+    return Py_BuildValue("(ONN)", Py_TYPE(self), args, state_table);
 }
 
 /* De-serialization function for pickling. */
