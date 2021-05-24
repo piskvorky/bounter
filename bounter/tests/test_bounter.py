@@ -61,6 +61,12 @@ class BounterInitTest(unittest.TestCase):
         self.assertEqual(counter[u'bar'], 1)
         self.assertEqual(counter.cardinality(), 2)
 
+    def test_contains(self):
+        counter = bounter(size_mb=16)
+        counter.update([u'foo', u'bar', u'foo'])
+        self.assertTrue('foo' in counter)
+        self.assertFalse('foobar' in counter)
+
     def test_sanity_nocount(self):
         counter = bounter(need_counts=False)
         counter.update([u'foo', u'bar', u'foo'])
@@ -69,3 +75,6 @@ class BounterInitTest(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             print(counter[u'foo'])
+
+if __name__ == '__main__':
+    unittest.main()

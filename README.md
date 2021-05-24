@@ -1,10 +1,9 @@
 # Bounter -- Counter for large datasets
 
+[![License](https://img.shields.io/pypi/l/bounter.svg)](https://github.com/RaRe-Technologies/bounter/blob/master/LICENSE)
 [![Build Status](https://travis-ci.org/RaRe-Technologies/bounter.svg?branch=master)](https://travis-ci.org/RaRe-Technologies/bounter)
 [![GitHub release](https://img.shields.io/github/release/rare-technologies/bounter.svg?maxAge=3600)](https://github.com/RaRe-Technologies/bounter/releases)
-[![Mailing List](https://img.shields.io/badge/-Mailing%20List-lightgrey.svg)](https://groups.google.com/forum/#!forum/gensim)
-[![Gitter](https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-09a3d5.svg)](https://gitter.im/RaRe-Technologies/gensim)
-[![Follow](https://img.shields.io/twitter/follow/gensim_py.svg?style=social&label=Follow)](https://twitter.com/gensim_py)
+[![Downloads](https://pepy.tech/badge/bounter/week)](https://pepy.tech/project/bounter/week)
 
 Bounter is a Python library, written in C, for extremely fast probabilistic counting of item frequencies in massive datasets. Unlike `Counter`, it uses only a small fixed memory footprint.
 
@@ -26,7 +25,22 @@ However, unlike `dict` or `Counter`, Bounter can process huge collections where 
 
 Bounter implements approximative algorithms using optimized low-level C structures, to avoid the overhead of Python objects. It lets you specify the maximum amount of RAM you want to use. In the Wikipedia example below, Bounter uses 31x less memory compared to `Counter`.
 
-Bounter is also marginally faster than the built-in `dict` and `Counter`, so wherever you can represent your **items as strings** (both byte-strings and unicode are fine, and Bounter works in both Python2 and Python3), there's no reason not to use Bounter instead.
+Bounter is also marginally faster than the built-in `dict` and `Counter`, so wherever you can represent your **items as strings** (both byte-strings and unicode are fine, and Bounter works in both Python2 and Python3), there's no reason not to use Bounter instead except:
+
+
+## When not to use Bounter?
+Beware, Bounter is only a probabilistic frequency counter and cannot be relied on for exact counting. (You can't expect a data structure with finite size to hold infinite data.)
+Example of Bounter failing:
+
+```python
+from bounter import bounter
+bounts = bounter(size_mb=1)
+bounts.update(str(i) for i in range(10000000))
+bounts['100']
+0
+```
+
+Please use `Counter` or `dict` when such exact counts matter. When they don't matter, like in most NLP and ML applications with huge datasets, Bounter is a very good alternative.
 
 ## Installation
 
