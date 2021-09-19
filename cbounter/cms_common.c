@@ -83,10 +83,21 @@ CMS_VARIANT(_init)(CMS_TYPE *self, PyObject *args, PyObject *kwds)
     HyperLogLog_init(&self->hll, 16);
 
     self->table = (CMS_CELL_TYPE **) malloc(self->depth * sizeof(CMS_CELL_TYPE *));
+    if (!self->table)
+    {
+        fprintf(stderr, "Unable to allocate a table with requested depth[%d]!\r\n", self->depth);
+        exit (-1);
+    }
+
     int i;
     for (i = 0; i < self->depth; i++)
     {
         self->table[i] = (CMS_CELL_TYPE *) calloc(self->width, sizeof(CMS_CELL_TYPE));
+        if (!self->table[i])
+        {
+            fprintf(stderr, "Unable to allocate a table[%d] with requested width[%#x]!\r\n", i, self->width);
+            exit (-1);
+        }
     }
     return 0;
 }
