@@ -1,15 +1,18 @@
 //-----------------------------------------------------------------------------
-// Author: Filip Stefanak <f.stefanak@rare-technologies.com>
+// Author: Josep Pon Farreny <jponfarreny@gmail.com.com>
 // Copyright (C) 2017 Rare Technologies
 //
 // This code is distributed under the terms and conditions
 // from the MIT License (MIT).
 
-#define CMS_TYPE CMS_Conservative
-#define CMS_TYPE_STRING "CMS_Conservative"
-#define CMS_CELL_TYPE uint32_t
+#ifndef _CMS64_CONSERVATIE_H_
+#define _CMS64_CONSERVATIE_H_
 
-#include "cms_common.c"
+#define CMS_TYPE CMS64_Conservative
+#define CMS_TYPE_STRING "CMS64_Conservative"
+#define CMS_CELL_TYPE uint64_t
+
+#include "cms_common.h"
 
 static inline int CMS_VARIANT(should_inc)(CMS_CELL_TYPE value)
 {
@@ -25,3 +28,5 @@ static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value) (CMS_CELL_TYPE v1, CMS_CEL
 {
     return v1 + v2;
 }
+
+#endif /* _CMS64_CONSERVATIE_H_ */

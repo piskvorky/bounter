@@ -136,8 +136,9 @@ CMS_VARIANT(_increment_obj)(CMS_TYPE *self, char *data, Py_ssize_t dataLength, l
     }
 
     CMS_CELL_TYPE result = min_value;
-    for (; increment > 0; increment--)
+    for (; increment > 0; increment--) {
         result += CMS_VARIANT(should_inc)(result);
+    }
 
     if (result > min_value)
     {

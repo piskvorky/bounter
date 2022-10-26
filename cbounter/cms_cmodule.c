@@ -18,7 +18,8 @@ static inline uint32_t rand_32b()
     return r;
 }
 
-#include "cms_conservative.c"
+#include "cms_conservative.h"
+#include "cms64_conservative.h"
 #include "cms_log8.c"
 #include "cms_log1024.c"
 #include <time.h>
@@ -50,6 +51,7 @@ PyMODINIT_FUNC initbounter_cmsc(void)
 {
     PyObject* m;
     if (PyType_Ready(&CMS_ConservativeType) < 0
+        || PyType_Ready(&CMS64_ConservativeType) < 0
         || PyType_Ready(&CMS_Log8Type) < 0
         || PyType_Ready(&CMS_Log1024Type) < 0) {
 
@@ -75,6 +77,9 @@ PyMODINIT_FUNC initbounter_cmsc(void)
 
     Py_INCREF(&CMS_ConservativeType);
     PyModule_AddObject(m, "CMS_Conservative", (PyObject *)&CMS_ConservativeType);
+
+    Py_INCREF(&CMS64_ConservativeType);
+    PyModule_AddObject(m, "CMS64_Conservative", (PyObject *)&CMS64_ConservativeType);
 
     srand(time(NULL));
 

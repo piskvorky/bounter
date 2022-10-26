@@ -9,7 +9,7 @@
 #define CMS_TYPE_STRING "CMS_Log1024"
 #define CMS_CELL_TYPE uint16_t
 
-#include "cms_common.c"
+#include "cms_common.h"
 
 static inline int CMS_VARIANT(should_inc)(CMS_CELL_TYPE value)
 {
