@@ -24,9 +24,13 @@ static inline long long CMS_VARIANT(decode)(CMS_CELL_TYPE value)
     return value;
 }
 
-static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value) (CMS_CELL_TYPE v1, CMS_CELL_TYPE v2, uint32_t merge_seed)
+static inline CMS_CELL_TYPE CMS_VARIANT(_merge_value)(CMS_CELL_TYPE v1, CMS_CELL_TYPE v2, uint32_t merge_seed)
 {
     return v1 + v2;
 }
+
+#undef CMS_TYPE
+#undef CMS_TYPE_STRING
+#undef CMS_CELL_TYPE
 
 #endif /* _CMS_CONSERVATIE_H_ */
