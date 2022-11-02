@@ -128,12 +128,15 @@ class CountMinSketch(object):
                 self.cms = cmsc.CMS64_Conservative(width=self.width, depth=self.depth)
             else:
                 raise ValueError(
-                    f"Unsupported parameter cell_size={cell_size}."
-                    " Use CellSize.BITS_32 or CellSize.BITS_64."
+                    "Unsupported parameter cell_size={}. Use CellSize.BITS_32 or CellSize.BITS_64.".format(
+                        cell_size
+                    )
                 )
         else:
             raise ValueError(
-                f"Unsupported parameter log_counting={log_counting}. Use None, 8, or 1024."
+                "Unsupported parameter log_counting={}. Use None, 8, or 1024.".format(
+                    log_counting
+                )
             )
 
         # optimize calls by directly binding to C implementation
