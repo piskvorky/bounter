@@ -143,7 +143,7 @@ class CountMinSketch(object):
         self.increment = self.cms.increment
 
     @staticmethod
-    def cell_size(cell_size: CellSize, log_counting=None):
+    def cell_size(cell_size, log_counting=None):
         if log_counting == 8:
             return 1
         if log_counting == 1024:
