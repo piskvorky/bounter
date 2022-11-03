@@ -34,9 +34,9 @@ class CountMinSketch(object):
     To calculate memory footprint:
         ( width * depth * cell_size ) + HLL size
         Cell size is
-           - 4B for default counting
-           - 2B for log1024 counting
-           - 1B for log8 counting
+            - 4B for default counting
+            - 2B for log1024 counting
+            - 1B for log8 counting
         HLL size is 64 KB
     Memory usage example:
         width 2^25 (33 554 432), depth 8, log1024 (2B) has 2^(25 + 3 + 1) + 64 KB = 512.06 MB
@@ -56,10 +56,10 @@ class CountMinSketch(object):
     def __init__(
         self,
         size_mb=64,
-        cell_size=CellSize.BITS_32,
         width=None,
         depth=None,
         log_counting=None,
+        cell_size=CellSize.BITS_32,
     ):
         """
         Initialize the Count-Min Sketch structure with the given parameters
@@ -76,11 +76,11 @@ class CountMinSketch(object):
                 If width is not provided, the algorithm chooses the maximum width to fill the available size.
                 The more, the better, should be very large, preferably in the same order of magnitude as the cardinality
                 of the counted set.
-            cell_size (CellSize): Size of the cells when `log_counting` is None.
             log_counting (int): Use logarithmic approximate counter value for reduced bucket size:
                 - None (default): 4B or 8B according to `cell_size`, no counter error
                 - 1024: 2B, value approximation error ~2% for values larger than 2048
                 - 8: 1B, value approximation error ~30% for values larger than 16
+            cell_size (CellSize): Size of the cells when `log_counting` is None.
         """
 
         cell_bytes = CountMinSketch.cell_size(cell_size, log_counting)
@@ -128,15 +128,13 @@ class CountMinSketch(object):
                 self.cms = cmsc.CMS64_Conservative(width=self.width, depth=self.depth)
             else:
                 raise ValueError(
-                    "Unsupported parameter cell_size={}. Use CellSize.BITS_32 or CellSize.BITS_64.".format(
-                        cell_size
-                    )
+                    "Unsupported parameter cell_size=%s. Use CellSize.BITS_32 or CellSize.BITS_64."
+                    % (cell_size)
                 )
         else:
             raise ValueError(
-                "Unsupported parameter log_counting={}. Use None, 8, or 1024.".format(
-                    log_counting
-                )
+                "Unsupported parameter log_counting=%s. Use None, 8, or 1024."
+                % (log_counting)
             )
 
         # optimize calls by directly binding to C implementation
