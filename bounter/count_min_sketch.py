@@ -7,7 +7,13 @@
 # This code is distributed under the terms and conditions
 # from the MIT License (MIT).
 
+import enum
 import bounter_cmsc as cmsc
+
+
+class CellSize(enum.Enum):
+    BITS_32 = 32
+    BITS_64 = 64
 
 
 class CountMinSketch(object):
@@ -28,9 +34,9 @@ class CountMinSketch(object):
     To calculate memory footprint:
         ( width * depth * cell_size ) + HLL size
         Cell size is
-           - 4B for default counting
-           - 2B for log1024 counting
-           - 1B for log8 counting
+            - 4B for default counting
+            - 2B for log1024 counting
+            - 1B for log8 counting
         HLL size is 64 KB
     Memory usage example:
         width 2^25 (33 554 432), depth 8, log1024 (2B) has 2^(25 + 3 + 1) + 64 KB = 512.06 MB
@@ -47,7 +53,14 @@ class CountMinSketch(object):
         counting as the collision bias will already be minimal.
     """
 
-    def __init__(self, size_mb=64, width=None, depth=None, log_counting=None):
+    def __init__(
+        self,
+        size_mb=64,
+        width=None,
+        depth=None,
+        log_counting=None,
+        cell_size=CellSize.BITS_32,
+    ):
         """
         Initialize the Count-Min Sketch structure with the given parameters
 
@@ -64,33 +77,40 @@ class CountMinSketch(object):
                 The more, the better, should be very large, preferably in the same order of magnitude as the cardinality
                 of the counted set.
             log_counting (int): Use logarithmic approximate counter value for reduced bucket size:
-                - None (default): 4B, no counter error
+                - None (default): 4B or 8B according to `cell_size`, no counter error
                 - 1024: 2B, value approximation error ~2% for values larger than 2048
                 - 8: 1B, value approximation error ~30% for values larger than 16
+            cell_size (CellSize): Size of the cells when `log_counting` is None.
         """
 
-        cell_size = CountMinSketch.cell_size(log_counting)
-        self.cell_size_v = cell_size
+        cell_bytes = CountMinSketch.cell_size(cell_size, log_counting)
+        self.cell_size_v = cell_bytes
 
         if size_mb is None or not isinstance(size_mb, int):
-            raise ValueError("size_mb must be an integer representing the maximum size of the structure in MB")
+            raise ValueError(
+                "size_mb must be an integer representing the maximum size of the structure in MB"
+            )
 
         if width is None and depth is None:
-            self.width = 1 << (size_mb * (2 ** 20) // (cell_size * 8 * 2)).bit_length()
-            self.depth = (size_mb * (2 ** 20)) // (self.width * cell_size)
+            self.width = 1 << (size_mb * (2**20) // (cell_bytes * 8 * 2)).bit_length()
+            self.depth = (size_mb * (2**20)) // (self.width * cell_bytes)
         elif width is None:
             self.depth = depth
-            avail_width = (size_mb * (2 ** 20)) // (depth * cell_size)
+            avail_width = (size_mb * (2**20)) // (depth * cell_bytes)
             self.width = 1 << (avail_width.bit_length() - 1)
             if not self.width:
-                raise ValueError("Requested depth is too large for maximum memory size.")
+                raise ValueError(
+                    "Requested depth is too large for maximum memory size."
+                )
         elif depth is None:
             if width != 1 << (width.bit_length() - 1):
                 raise ValueError("Requested width must be a power of 2.")
             self.width = width
-            self.depth = (size_mb * (2 ** 20)) // (width * cell_size)
+            self.depth = (size_mb * (2**20)) // (width * cell_bytes)
             if not self.depth:
-                raise ValueError("Requested width is too large for maximum memory size.")
+                raise ValueError(
+                    "Requested width is too large for maximum memory size."
+                )
         else:
             if width != 1 << (width.bit_length() - 1):
                 raise ValueError("Requested width must be a power of 2.")
@@ -102,20 +122,38 @@ class CountMinSketch(object):
         elif log_counting == 1024:
             self.cms = cmsc.CMS_Log1024(width=self.width, depth=self.depth)
         elif log_counting is None:
-            self.cms = cmsc.CMS_Conservative(width=self.width, depth=self.depth)
+            if cell_size == CellSize.BITS_32:
+                self.cms = cmsc.CMS_Conservative(width=self.width, depth=self.depth)
+            elif cell_size == CellSize.BITS_64:
+                self.cms = cmsc.CMS64_Conservative(width=self.width, depth=self.depth)
+            else:
+                raise ValueError(
+                    "Unsupported parameter cell_size=%s. Use CellSize.BITS_32 or CellSize.BITS_64."
+                    % (cell_size)
+                )
         else:
-            raise ValueError("Unsupported parameter log_counting=%s. Use None, 8, or 1024." % log_counting)
+            raise ValueError(
+                "Unsupported parameter log_counting=%s. Use None, 8, or 1024."
+                % (log_counting)
+            )
 
         # optimize calls by directly binding to C implementation
         self.increment = self.cms.increment
 
     @staticmethod
-    def cell_size(log_counting=None):
+    def cell_size(cell_size, log_counting=None):
         if log_counting == 8:
             return 1
         if log_counting == 1024:
             return 2
-        return 4
+        if log_counting is None:
+            if cell_size == CellSize.BITS_32:
+                return 4
+            if cell_size == CellSize.BITS_64:
+                return 8
+        raise ValueError(
+            "cell_size must be one of [BITS32, BITS64] and log_counting one of [None, 8, 1024]"
+        )
 
     @staticmethod
     def table_size(width, depth=4, log_counting=None):
@@ -192,4 +230,6 @@ class CardinalityEstimator(CountMinSketch):
         super(CardinalityEstimator, self).__init__(width=1, depth=1)
 
     def __getitem__(self, key):
-        raise NotImplementedError("Individual item counting is not supported for cardinality estimator!")
+        raise NotImplementedError(
+            "Individual item counting is not supported for cardinality estimator!"
+        )
