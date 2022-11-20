@@ -1,3 +1,8 @@
+# Pre-requisites
+
+1. Install twine (`pip install --upgrade twine`)
+2. [Generate a PyPI API token and store it in ~/.pypirc](https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#create-an-account)
+
 # Release Procedure
 
 1. Bump the version in `bounter/__init__.py`
@@ -6,7 +11,7 @@
 4. Commit your changes
 5. Run release/release.sh 1.2.3 where 1.2.3 is the version you're releasing
 
-## Updating the Change Log
+# Updating the Change Log
 
 Eyeball https://github.com/RaRe-Technologies/bounter/pulls?q=is%3Apr+is%3Aclosed for PRs closed since the last release, then run:
 

@@ -27,7 +27,8 @@ setup(
     name='bounter',
     version='1.2.0',
     description='Counter for large datasets',
-    long_description=read('README.rst'),
+    long_description=read('README.md'),
+    long_description_content_type='text/markdown',
 
     headers=['cbounter/hll.h', 'cbounter/murmur3.h'],
     ext_modules=[

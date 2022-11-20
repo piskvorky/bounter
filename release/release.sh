@@ -11,13 +11,15 @@ grep --silent "__version__ = '$version'" bounter/__init__.py
 
 pandoc --from=markdown --to=rst --output=README.rst README.md
 
-set +e
-git commit README.rst -m "updated README.rst from README.md"
-set -e
-
 #
 # Tagging will fail if the tag already exists.
 #
 git tag "$version"
 git push origin master --tags
-python setup.py sdist upload
+
+twine --version
+#
+# Ensure the package is valid, e.g. description correctly renders as RST
+#
+twine check dist/*
+twine upload dist/*
