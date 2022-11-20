@@ -1,6 +1,10 @@
 Changes
 =======
 
+## 1.2.0, 2022-11-20
+
+* Add 64bit Min Sketch (__[@jponf](https://github.com/jponf)__, [#53](https://github.com/RaRe-Technologies/bounter/pull/53))
+
 ## 1.1.1, 2020-08-16
 
 * Resolve pickle mem leak (__[@isamaru](https://github.com/isamaru)__, PR [#41](https://github.com/RaRe-Technologies/bounter/pull/41))
