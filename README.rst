@@ -4,8 +4,8 @@ Bounter – Counter for large datasets
 |License| |Build Status| |GitHub release| |Downloads|
 
 Bounter is a Python library, written in C, for extremely fast
-probabilistic counting of item frequencies in massive datasets, using
-only a small fixed memory footprint.
+probabilistic counting of item frequencies in massive datasets. Unlike
+``Counter``, it uses only a small fixed memory footprint.
 
 Why Bounter?
 ------------
@@ -215,43 +215,43 @@ memory) and present the precision and recall here:
 
 +-------------------------------------+-------+-----+-----+----+----+
 | Algorithm                           | Time  | Mem | Pre | Re | F1 |
-|                                     | to    | ory | cis | ca | s  |
-|                                     | build |     | ion | ll | co |
-|                                     |       |     |     |    | re |
+|                                     | to    | ory | cis | ca | sc |
+|                                     | build |     | ion | ll | or |
+|                                     |       |     |     |    | e  |
 +=====================================+=======+=====+=====+====+====+
-| ``Counter`` (built-in)              | 32m   | 31  | 1   | 10 | 10 |
-|                                     | 26s   | GB  | 00% | 0% | 0% |
+| ``Counter`` (built-in)              | 32m   | 31  | 100 | 10 | 10 |
+|                                     | 26s   | GB  | %   | 0% | 0% |
 +-------------------------------------+-------+-----+-----+----+----+
-| ``bounter(size_mb=128, need         | 19m   | **  | 95. | 97 | 96 |
-| _iteration=False, log_counting=8)`` | 53s   | 128 | 02% | .1 | .0 |
-|                                     |       | M   |     | 0% | 4% |
-|                                     |       | B** |     |    |    |
+| ``bounter(size_mb=128, need_iterati | 19m   | **1 | 95. | 97 | 96 |
+| on=False, log_counting=8)``         | 53s   | 28  | 02% | .1 | .0 |
+|                                     |       | MB* |     | 0% | 4% |
+|                                     |       | *   |     |    |    |
 +-------------------------------------+-------+-----+-----+----+----+
-| ``bounter(size_mb=1024)``           | 17m   | 1   | 1   | 99 | 99 |
-|                                     | 54s   | GB  | 00% | .2 | .6 |
+| ``bounter(size_mb=1024)``           | 17m   | 1   | 100 | 99 | 99 |
+|                                     | 54s   | GB  | %   | .2 | .6 |
 |                                     |       |     |     | 7% | 4% |
 +-------------------------------------+-------+-----+-----+----+----+
-| ``bounter(si                        | 19m   | 1   | 99. | 10 | 99 |
-| ze_mb=1024, need_iteration=False)`` | 58s   | GB  | 64% | 0% | .8 |
+| ``bounter(size_mb=1024, need_iterat | 19m   | 1   | 99. | 10 | 99 |
+| ion=False)``                        | 58s   | GB  | 64% | 0% | .8 |
 |                                     |       |     |     |    | 2% |
 +-------------------------------------+-------+-----+-----+----+----+
-| ``bounter(size_mb=1024, need_it     | 20m   | 1   | **  | ** | ** |
-| eration=False, log_counting=1024)`` | 05s   | GB  | 100 | 10 | 10 |
-|                                     |       |     | %** | 0% | 0% |
+| ``bounter(size_mb=1024, need_iterat | 20m   | 1   | **1 | ** | ** |
+| ion=False, log_counting=1024)``     | 05s   | GB  | 00% | 10 | 10 |
+|                                     |       |     | **  | 0% | 0% |
 |                                     |       |     |     | ** | ** |
 +-------------------------------------+-------+-----+-----+----+----+
-| ``bounter(size_mb=1024, need        | 19m   | 1   | 97. | 97 | 97 |
-| _iteration=False, log_counting=8)`` | 59s   | GB  | 45% | .4 | .4 |
+| ``bounter(size_mb=1024, need_iterat | 19m   | 1   | 97. | 97 | 97 |
+| ion=False, log_counting=8)``        | 59s   | GB  | 45% | .4 | .4 |
 |                                     |       |     |     | 5% | 5% |
 +-------------------------------------+-------+-----+-----+----+----+
-| ``bounter(size_mb=4096)``           | **16m | 4   | 1   | 10 | 10 |
-|                                     | 21s** | GB  | 00% | 0% | 0% |
+| ``bounter(size_mb=4096)``           | **16m | 4   | 100 | 10 | 10 |
+|                                     | 21s** | GB  | %   | 0% | 0% |
 +-------------------------------------+-------+-----+-----+----+----+
-| ``bounter(si                        | 20m   | 4   | 1   | 10 | 10 |
-| ze_mb=4096, need_iteration=False)`` | 14s   | GB  | 00% | 0% | 0% |
+| ``bounter(size_mb=4096, need_iterat | 20m   | 4   | 100 | 10 | 10 |
+| ion=False)``                        | 14s   | GB  | %   | 0% | 0% |
 +-------------------------------------+-------+-----+-----+----+----+
-| ``bounter(size_mb=4096, need_it     | 20m   | 4   | 1   | 99 | 99 |
-| eration=False, log_counting=1024)`` | 14s   | GB  | 00% | .6 | .8 |
+| ``bounter(size_mb=4096, need_iterat | 20m   | 4   | 100 | 99 | 99 |
+| ion=False, log_counting=1024)``     | 14s   | GB  | %   | .6 | .8 |
 |                                     |       |     |     | 4% | 2% |
 +-------------------------------------+-------+-----+-----+----+----+
 
