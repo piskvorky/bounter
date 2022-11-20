@@ -9,8 +9,6 @@ grep --silent "## $version," CHANGELOG.md
 grep --silent "version='$version'" setup.py
 grep --silent "__version__ = '$version'" bounter/__init__.py
 
-pandoc --from=markdown --to=rst --output=README.rst README.md
-
 #
 # Tagging will fail if the tag already exists.
 #
